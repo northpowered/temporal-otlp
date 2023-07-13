@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "temporal-otel-example"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "temporal_otel_example"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+temporalio = "^1.2.0"
+opentelemetry-sdk = "^1.19.0"
+opentelemetry-exporter-jaeger = "^1.19.0"
+aiojobs = "^1.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

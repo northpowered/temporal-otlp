@@ -1,0 +1,1 @@
+SERVICE_LETTER: str = "B"
