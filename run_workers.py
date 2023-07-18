@@ -2,9 +2,9 @@ from multiprocessing import Process
 import subprocess
 
 
-if __name__=="__main__":        
+if __name__== "__main__":
 
-    services: list = ['b', 'c', 'd', 'e', 'f']
+    services: list = ['a', 'b', 'c', 'd', 'e', 'f']
     procs: list = []
     
     for s in services:

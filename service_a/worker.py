@@ -1,11 +1,18 @@
 from temporalio import workflow, activity
 from temporalio.contrib.opentelemetry import TracingInterceptor
+from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig, LoggingConfig
 from temporalio.client import Client
 from temporalio.worker import Worker
 import asyncio
-import uuid
 from datetime import timedelta
 from tracer import tracer, trace
+from env import SERVICE_LETTER
+from logger import setup_logging
+from loguru import logger
+
+
+setup_logging()
+
 
 TASK_QUEUE: str = "service_a_queue"
 
@@ -13,6 +20,7 @@ TASK_QUEUE: str = "service_a_queue"
 @activity.defn(name='service_a_activity_01')
 async def service_a_activity_01() -> str:
     with tracer.start_as_current_span("EXECUTE-A-ACTIVITY") as span:
+        logger.info(f"Execute {activity.info().activity_type}")
         return "A"
 
 
@@ -21,8 +29,8 @@ class ServiceAWorkflow:
     @workflow.run
     async def run(self):
         with tracer.start_as_current_span("MAIN-A-RUN", kind=trace.SpanKind.SERVER) as span:
+            span.set_attribute("x-custom-tag", "foobar")
 
-            
             with tracer.start_as_current_span("RUN-A-ACTIVITY") as span:
                 result_a = await workflow.execute_activity(
                     activity=service_a_activity_01,
@@ -45,28 +53,30 @@ class ServiceAWorkflow:
 
 
 async def run_service():
-    client = await Client.connect(
-        target_host="localhost:7233",
-        interceptors=[TracingInterceptor()]
+
+    runtime = Runtime(
+        telemetry=TelemetryConfig(
+            metrics=PrometheusConfig(bind_address="0.0.0.0:5001"),
+            
+        )
     )
 
-    async with Worker(
-        client,
+    client = await Client.connect(
+        target_host="localhost:7233",
+        interceptors=[TracingInterceptor()],
+        runtime=runtime
+    )
+    worker = Worker(
+        client=client,
         task_queue=TASK_QUEUE,
         workflows=[ServiceAWorkflow],
-        activities=[service_a_activity_01],
-    ):
-
-        result = await client.execute_workflow(
-            workflow=ServiceAWorkflow.run,
-            id=str(uuid.uuid4()),
-            task_queue=TASK_QUEUE
-        )
-        return result
+        activities=[service_a_activity_01]
+    )
+    await worker.run()
 
 
+def run_worker():
 
-if __name__ == "__main__":
-
-    result = asyncio.run(run_service())
-    print(result)
+    print(f"Start worker {SERVICE_LETTER}")
+    asyncio.run(run_service())
+    print(f"Close worker {SERVICE_LETTER}")

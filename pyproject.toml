@@ -12,6 +12,8 @@ temporalio = "^1.2.0"
 opentelemetry-sdk = "^1.19.0"
 opentelemetry-exporter-jaeger = "^1.19.0"
 aiojobs = "^1.1.0"
+opentelemetry-exporter-otlp = "^1.19.0"
+loguru = "^0.7.0"
 
 
 [build-system]

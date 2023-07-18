@@ -3,6 +3,7 @@ from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 
 
 trace.set_tracer_provider(
@@ -19,9 +20,18 @@ jaeger_exporter = JaegerExporter(
     agent_port=agent_port,
 )
 
-span_processor = BatchSpanProcessor(jaeger_exporter)
+tempo_exporter = OTLPSpanExporter(
+    endpoint="http://127.0.0.1:4317"
+)
 
-trace.get_tracer_provider().add_span_processor(span_processor)
+jaeger_span_processor = BatchSpanProcessor(jaeger_exporter)
+tempo_span_processor = BatchSpanProcessor(tempo_exporter)
+
+
+tracer = trace.get_tracer_provider()
+
+tracer.add_span_processor(jaeger_span_processor)
+tracer.add_span_processor(tempo_span_processor)
 
 
 tracer = trace.get_tracer(__name__)

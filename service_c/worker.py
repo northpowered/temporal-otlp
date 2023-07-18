@@ -1,10 +1,9 @@
 from temporalio import workflow, activity
 from temporalio.contrib.opentelemetry import TracingInterceptor
+from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig
 from temporalio.client import Client
 from temporalio.worker import Worker
-from threading import Lock
 import asyncio
-import uuid
 from datetime import timedelta
 from tracer import tracer
 from env import SERVICE_LETTER
@@ -41,9 +40,16 @@ class ServiceWorkflow:
 
 
 async def run_service():
+    runtime = Runtime(
+        telemetry=TelemetryConfig(
+            metrics=PrometheusConfig(bind_address="0.0.0.0:5003")
+        )
+    )
+
     client = await Client.connect(
         target_host="localhost:7233",
-        interceptors=[TracingInterceptor()]
+        interceptors=[TracingInterceptor()],
+        runtime=runtime
     )
     worker = Worker(
         client=client,
