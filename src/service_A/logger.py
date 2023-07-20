@@ -2,6 +2,7 @@ import logging
 from loguru import logger
 import sys
 import traceback
+from env import LOG_JSON, LOG_LEVEL
 
 
 class InterceptHandler(logging.Handler):
@@ -38,7 +39,6 @@ def setup_logging():
     logging.root.handlers = [InterceptHandler()]
 
     def formatter(record):
-        # base_fmt = "<green>{time:YYYY-MM-DDTHH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{module: <16}</cyan>"
         base_fmt = ""
         extra: dict = record.get('extra', dict())
         exception = record.get('exception')
@@ -57,8 +57,8 @@ def setup_logging():
         handlers=[
             {
                 "sink": sys.stdout,
-                "serialize": True,
-                "level": "DEBUG",
+                "serialize": LOG_JSON,
+                "level": LOG_LEVEL,
                 "format": formatter,
                 "colorize": False
             }

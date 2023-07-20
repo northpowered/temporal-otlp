@@ -1,0 +1,32 @@
+# export DOCKER_BUILDKIT=1 
+# export COMPOSE_DOCKER_CLI_BUILD=1
+
+x-service-template:
+  &service
+  env_file:
+    - .env
+  networks:
+    - otlp_network
+  build:
+    context: .
+
+
+services:
+
+# Workers
+
+
+
+
+  a:
+    <<: *service
+    build:
+      args:
+        - SRV_LETTER=A
+
+# Networking
+
+networks:
+  otlp_network:
+    name: otlp_network
+    external: true

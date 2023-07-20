@@ -9,7 +9,7 @@ if __name__== "__main__":
     
     for s in services:
         procs.append(
-            Process(target=subprocess.call,args=(["python3", f"service_{s}/separate_run.py"],))
+            Process(target=subprocess.call,args=(["python3", f"src/service_{s}/separate_run.py"],))
         )
 
     for p in procs:

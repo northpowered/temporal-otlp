@@ -6,7 +6,12 @@ from temporalio.worker import Worker
 import asyncio
 from datetime import timedelta
 from tracer import tracer
-from env import SERVICE_LETTER
+from env import SERVICE_LETTER, PROMETHEUS_PORT, TEMPORAL_ENDPOINT
+from logger import setup_logging
+from loguru import logger
+
+
+setup_logging()
 
 
 TASK_QUEUE: str = f"service_{SERVICE_LETTER}_queue"
@@ -15,6 +20,7 @@ TASK_QUEUE: str = f"service_{SERVICE_LETTER}_queue"
 @activity.defn(name=f'service_{SERVICE_LETTER}_activity_01')
 async def activity_01(payload: str) -> str:
     with tracer.start_as_current_span(f"EXECUTE-{SERVICE_LETTER}-ACTIVITY") as span:
+        logger.info(f"Execute {activity.info().activity_type}", extra={"SERVICE_LETTER": SERVICE_LETTER})
         return f"{payload}->{SERVICE_LETTER}"
 
 
@@ -30,14 +36,27 @@ class ServiceWorkflow:
                     task_queue=TASK_QUEUE,
                     start_to_close_timeout=timedelta(seconds=5)
                 )
+            with tracer.start_as_current_span(f"RUN-E-ACTIVITY") as span:
+                result = await workflow.execute_activity(
+                    activity="service_E_activity_01",
+                    arg=result,
+                    task_queue="service_E_queue",
+                    start_to_close_timeout=timedelta(seconds=5)
+                )
+            with tracer.start_as_current_span(f"RUN-F-ACTIVITY") as span:
+                result = await workflow.execute_activity(
+                    activity="service_F_activity_01",
+                    arg=result,
+                    task_queue="service_F_queue",
+                    start_to_close_timeout=timedelta(seconds=5)
+                )
                 return result
 
 
 async def run_service():
-
     runtime = Runtime(
         telemetry=TelemetryConfig(
-            metrics=PrometheusConfig(bind_address="0.0.0.0:5002")
+            metrics=PrometheusConfig(bind_address=f"0.0.0.0:{PROMETHEUS_PORT}")
         )
     )
 
@@ -56,10 +75,5 @@ async def run_service():
 
 
 def run_worker():
-
-    print(f"Start worker {SERVICE_LETTER}")
-    # loop = asyncio.new_event_loop()
-    # asyncio.set_event_loop(loop)
+    logger.info(f"Starting worker {SERVICE_LETTER}")
     asyncio.run(run_service())
-    print(f"Close worker {SERVICE_LETTER}")
-    

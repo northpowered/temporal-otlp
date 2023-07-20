@@ -3,8 +3,8 @@ from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from env import SERVICE_LETTER
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from env import SERVICE_LETTER, JAEGER_HOST, JAEGER_PORT, TEMPO_ENDPOINT
 
 
 trace.set_tracer_provider(
@@ -13,17 +13,13 @@ trace.set_tracer_provider(
     )
 )
 
-agent_host: str = "localhost"
-agent_port: int = 6831
 
 jaeger_exporter = JaegerExporter(
-    agent_host_name=agent_host,
-    agent_port=agent_port,
+    agent_host_name=JAEGER_HOST,
+    agent_port=JAEGER_PORT,
 )
 
-tempo_exporter = OTLPSpanExporter(
-    endpoint="http://127.0.0.1:4317"
-)
+tempo_exporter = OTLPSpanExporter(endpoint=TEMPO_ENDPOINT)
 
 jaeger_span_processor = BatchSpanProcessor(jaeger_exporter)
 tempo_span_processor = BatchSpanProcessor(tempo_exporter)

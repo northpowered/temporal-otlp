@@ -1,1 +1,0 @@
-SERVICE_LETTER: str = "F"

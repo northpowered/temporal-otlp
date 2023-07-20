@@ -3,12 +3,15 @@ from temporalio.contrib.opentelemetry import TracingInterceptor
 from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig
 from temporalio.client import Client
 from temporalio.worker import Worker
-from threading import Lock
 import asyncio
-import uuid
 from datetime import timedelta
 from tracer import tracer
-from env import SERVICE_LETTER
+from env import SERVICE_LETTER, PROMETHEUS_PORT, TEMPORAL_ENDPOINT
+from logger import setup_logging
+from loguru import logger
+
+
+setup_logging()
 
 
 TASK_QUEUE: str = f"service_{SERVICE_LETTER}_queue"
@@ -17,6 +20,7 @@ TASK_QUEUE: str = f"service_{SERVICE_LETTER}_queue"
 @activity.defn(name=f'service_{SERVICE_LETTER}_activity_01')
 async def activity_01(payload: str) -> str:
     with tracer.start_as_current_span(f"EXECUTE-{SERVICE_LETTER}-ACTIVITY") as span:
+        logger.info(f"Execute {activity.info().activity_type}", extra={"SERVICE_LETTER": SERVICE_LETTER})
         return f"{payload}->{SERVICE_LETTER}"
 
 
@@ -38,7 +42,7 @@ class ServiceWorkflow:
 async def run_service():
     runtime = Runtime(
         telemetry=TelemetryConfig(
-            metrics=PrometheusConfig(bind_address="0.0.0.0:5005")
+            metrics=PrometheusConfig(bind_address=f"0.0.0.0:{PROMETHEUS_PORT}")
         )
     )
 
@@ -57,10 +61,5 @@ async def run_service():
 
 
 def run_worker():
-   
-    print(f"Start worker {SERVICE_LETTER}")
-    # loop = asyncio.new_event_loop()
-    # asyncio.set_event_loop(loop)
+    logger.info(f"Starting worker {SERVICE_LETTER}")
     asyncio.run(run_service())
-    print(f"Close worker {SERVICE_LETTER}")
-    
