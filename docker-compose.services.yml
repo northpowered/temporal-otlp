@@ -7,8 +7,6 @@ x-service-template:
     - .env
   networks:
     - otlp_network
-  build:
-    context: .
 
 
 services:
@@ -21,9 +19,43 @@ services:
   a:
     <<: *service
     build:
+      context: .
       args:
         - SRV_LETTER=A
 
+  b:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=B
+  c:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=C
+
+  d:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=D
+
+  e:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=E
+
+  f:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=F
 # Networking
 
 networks:
