@@ -47,7 +47,7 @@ async def run_service():
     )
 
     client = await Client.connect(
-        target_host="localhost:7233",
+        target_host=TEMPORAL_ENDPOINT,
         interceptors=[TracingInterceptor()],
         runtime=runtime
     )

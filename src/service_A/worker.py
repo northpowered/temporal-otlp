@@ -20,7 +20,13 @@ TASK_QUEUE: str = f"service_{SERVICE_LETTER}_queue"
 @activity.defn(name="service_a_activity_01")
 async def service_a_activity_01() -> str:
     with tracer.start_as_current_span("EXECUTE-A-ACTIVITY") as span:
-        logger.info(f"Execute {activity.info().activity_type}", extra={"SERVICE_LETTER": SERVICE_LETTER})
+        logger.info(
+            f"Execute {activity.info().activity_type}",
+            extra={
+                "SERVICE_LETTER": SERVICE_LETTER,
+                "span_id": span.get_span_context().span_id
+            }
+        )
         return "A"
 
 

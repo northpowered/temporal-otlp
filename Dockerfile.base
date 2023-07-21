@@ -2,10 +2,6 @@
 
 FROM python:3.10-slim
 
-ARG SRV_LETTER
-
-ENV SERVICE_LETTER=SRV_LETTER
-
 LABEL org.opencontainers.image.source="https://github.com/northpowered/temporal-otlp"
 
 LABEL version="0.1.0"

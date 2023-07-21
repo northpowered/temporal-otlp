@@ -10,6 +10,7 @@ class InterceptHandler(logging.Handler):
         extra_data: dict = dict()
         try:
             # Trying to catch `trace_id` and exclude None, if cought
+            
             assert record.trace_id
             extra_data['trace_id'] = record.trace_id
         except (AttributeError, AssertionError):
@@ -39,8 +40,18 @@ def setup_logging():
     logging.root.handlers = [InterceptHandler()]
 
     def formatter(record):
+        
         base_fmt = ""
         extra: dict = record.get('extra', dict())
+        #print(extra)
+        span = extra.get("span")
+        if span:
+            print(span)
+            record.__setattr__("trace_id", span.get_span_context().trace_id)
+            record["trace_id"] = span.get_span_context().trace_id
+            record["span_id"] = span.get_span_context().span_id
+            extra.pop("span")
+        
         exception = record.get('exception')
         try:
             trace_id = extra['trace_id']

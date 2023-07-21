@@ -7,14 +7,13 @@ x-service-template:
     - .env
   networks:
     - otlp_network
+  labels:
+      - com.host.plane=dp
 
 
 services:
 
 # Workers
-
-
-
 
   a:
     <<: *service
@@ -22,6 +21,7 @@ services:
       context: .
       args:
         - SRV_LETTER=A
+    hostname: otel-test-service-a
 
   b:
     <<: *service
@@ -29,12 +29,14 @@ services:
       context: .
       args:
         - SRV_LETTER=B
+    hostname: otel-test-service-b
   c:
     <<: *service
     build:
       context: .
       args:
         - SRV_LETTER=C
+    hostname: otel-test-service-c
 
   d:
     <<: *service
@@ -42,6 +44,7 @@ services:
       context: .
       args:
         - SRV_LETTER=D
+    hostname: otel-test-service-d
 
   e:
     <<: *service
@@ -49,6 +52,7 @@ services:
       context: .
       args:
         - SRV_LETTER=E
+    hostname: otel-test-service-e
 
   f:
     <<: *service
@@ -56,6 +60,7 @@ services:
       context: .
       args:
         - SRV_LETTER=F
+    hostname: otel-test-service-f
 # Networking
 
 networks:

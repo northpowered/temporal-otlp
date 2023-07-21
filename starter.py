@@ -1,11 +1,6 @@
-from temporalio import workflow, activity
-from temporalio.contrib.opentelemetry import TracingInterceptor
-from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig
 from temporalio.client import Client
-from temporalio.worker import Worker
 import asyncio
 import uuid
-from datetime import timedelta
 
 
 async def run_service():
@@ -17,7 +12,7 @@ async def run_service():
     result = await client.execute_workflow(
         workflow="Service-A-workflow",
         id=str(uuid.uuid4()),
-        task_queue="service_a_queue"
+        task_queue="service_A_queue"
     )
     return result
 

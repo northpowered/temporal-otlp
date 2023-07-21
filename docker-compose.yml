@@ -1,3 +1,5 @@
+version: "3.7"
+
 services:
 
 # Monitoring  tools
@@ -5,6 +7,7 @@ services:
   otel-test-jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: otel-test-jaeger
+    hostname: otel-test-jaeger
     ports:
       - "127.0.0.1:6831:6831/udp"
       - "127.0.0.1:16686:16686"
@@ -16,10 +19,15 @@ services:
       -  PROMETHEUS_SERVER_URL=http://otel-test-prometheus:9090
       -  PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=true
       -  MONITOR_MENU_ENABLED=true
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
 
   otel-test-prometheus:
     image: prom/prometheus:latest
     container_name: otel-test-prometheus
+    hostname: otel-test-prometheus
     volumes:
       - ./prometheus/:/etc/prometheus/
       - ./prometheus_data:/prometheus
@@ -30,10 +38,15 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
       - "127.0.0.1:9090:9090"
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
 
   otel-test-grafana:
     image: grafana/grafana:9.4.3
     container_name: otel-test-grafana
+    hostname: otel-test-grafana
     volumes:
       - ./grafana_data:/var/lib/grafana
     environment:
@@ -43,10 +56,15 @@ services:
       - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
     ports:
       - "127.0.0.1:3000:3000"
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
 
   otel-test-tempo:
     image: grafana/tempo:latest
     container_name: otel-test-tempo
+    hostname: otel-test-tempo
     command: ["-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml
@@ -57,11 +75,47 @@ services:
       - "127.0.0.1:4317:4317"  # otlp grpc
       - "127.0.0.1:4318:4318"  # otlp http
       - "127.0.0.1:9411:9411"   # zipkin
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  
+  loki:
+    image: grafana/loki:latest
+    container_name: otel-test-loki
+    hostname: otel-test-loki
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      # directory must be created first, with uid:gid 10001:10001
+      - ./loki:/loki
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: otel-test-promtail
+    hostname: otel-test-promtail
+    volumes:
+      # custom config will read logs from the containers of
+      # this project
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+      # to read container labels and logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
 
 # Temporal services
 
   otel-test-elasticsearch:
     container_name: otel-test-temporal-elasticsearch
+    hostname: otel-test-temporal-elasticsearch
     environment:
       - cluster.routing.allocation.disk.threshold_enabled=true
       - cluster.routing.allocation.disk.watermark.low=512mb
@@ -77,6 +131,8 @@ services:
       - 9200
     volumes:
       - /var/lib/elasticsearch/data
+    labels:
+      - com.host.plane=cp
   
   otel-test-postgresql:
     container_name: otel-test-temporal-postgresql
@@ -90,9 +146,12 @@ services:
       - 5432
     volumes:
       - /var/lib/postgresql/data
+    labels:
+      - com.host.plane=cp
 
   otel-test-temporal:
     container_name: otel-test-temporal
+    hostname: otel-test-temporal
     depends_on:
       - otel-test-postgresql
       - otel-test-elasticsearch
@@ -112,12 +171,14 @@ services:
     ports:
       - 7233:7233
     labels:
-      kompose.volume.type: configMap
+      - kompose.volume.type=configMap
+      - com.host.plane=cp
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
 
   temporal-admin-tools:
     container_name: otel-test-temporal-admin-tools
+    hostname: otel-test-temporal-admin-tools
     depends_on:
       - otel-test-temporal
     environment:
@@ -127,9 +188,12 @@ services:
       - otlp_network
     stdin_open: true
     tty: true
+    labels:
+      - com.host.plane=cp
 
   otel-test-temporal-ui:
     container_name: otel-test-temporal-ui
+    hostname: otel-test-temporal-ui
     depends_on:
       - otel-test-temporal
     environment:
@@ -140,6 +204,8 @@ services:
       - otlp_network
     ports:
       - 8080:8080
+    labels:
+      - com.host.plane=cp
 
 # Networking
 
