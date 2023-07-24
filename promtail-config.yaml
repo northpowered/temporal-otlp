@@ -25,13 +25,17 @@ scrape_configs:
             timestamp: "record.time.repr"
             record: record
             level: "record.level.name"
-            x_service_name: "record.extra.extra.SERVICE_LETTER"
-            span_id: "record.extra.extra.span_id"
+            x_service_name: "record.extra.service_letter"
+            span_id: "record.extra.span_id"
+            trace_id: "record.extra.trace_id"
+            x_request_id: "record.extra.x_request_id"
       - labels:
           level: level
           full_log_body: record
           x_service_name: x_service_name
           span_id: span_id
+          trace_id: trace_id
+          x_request_id: x_request_id
       - timestamp:
           format: RFC3339
           source: timestamp

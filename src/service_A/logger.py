@@ -6,6 +6,7 @@ from env import LOG_JSON, LOG_LEVEL
 
 
 class InterceptHandler(logging.Handler):
+
     def emit(self, record):
         extra_data: dict = dict()
         try:
@@ -43,21 +44,14 @@ def setup_logging():
         
         base_fmt = ""
         extra: dict = record.get('extra', dict())
-        #print(extra)
         span = extra.get("span")
         if span:
-            print(span)
-            record.__setattr__("trace_id", span.get_span_context().trace_id)
-            record["trace_id"] = span.get_span_context().trace_id
-            record["span_id"] = span.get_span_context().span_id
             extra.pop("span")
-        
+            record["extra"]["trace_id"] = str(span.get_span_context().trace_id)
+            record["extra"]["span_id"] = str(span.get_span_context().span_id)
+              
         exception = record.get('exception')
-        try:
-            trace_id = extra['trace_id']
-            base_fmt = base_fmt + f" | [{trace_id}]"
-        except KeyError:
-            pass
+
         if exception:
             extra["traceback"] = "\n" + \
                 "".join(traceback.format_exception(extra['exc_info'][1]))
