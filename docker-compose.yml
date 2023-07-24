@@ -36,6 +36,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-remote-write-receiver'
     ports:
       - "127.0.0.1:9090:9090"
     networks:
@@ -81,7 +82,7 @@ services:
       - com.host.plane=cp
 
   
-  loki:
+  otel-test-loki:
     image: grafana/loki:latest
     container_name: otel-test-loki
     hostname: otel-test-loki
@@ -95,7 +96,7 @@ services:
     labels:
       - com.host.plane=cp
 
-  promtail:
+  otel-test-promtail:
     image: grafana/promtail:latest
     container_name: otel-test-promtail
     hostname: otel-test-promtail
@@ -110,6 +111,47 @@ services:
       - otlp_network
     labels:
       - com.host.plane=cp
+
+
+  # otel-test-agent:
+  #   image: grafana/agent:latest
+  #   hostname: otel-test-agent
+  #   volumes:
+  #     - ./agent.yaml:/etc/agent-config/agent.yaml
+  #   entrypoint:
+  #     - /bin/grafana-agent
+  #     - -server.http.address=0.0.0.0:12345
+  #     - -config.file=/etc/agent-config/agent.yaml
+  #     - -metrics.wal-directory=/tmp/agent/wal
+  #     - -enable-features=integrations-next
+  #     - -config.expand-env
+  #     - -config.enable-read-api
+  #   environment:
+  #     HOSTNAME: otel-test-agent
+  #     REMOTE_WRITE_HOST: otel-test-cortex:9009
+  #     LOKI_HOST: otel-test-loki:3100
+  #     TEMPO_HOST: otel-test-tempo:4317
+  #   ports:
+  #     - "127.0.0.1:12345:12345"
+  #   networks:
+  #     - otlp_network
+  #   labels:
+  #     - com.host.plane=cp
+
+  # otel-test-cortex:
+  #   hostname: otel-test-cortex
+  #   image: cortexproject/cortex:v1.8.1
+  #   volumes:
+  #     - ./cortex.yaml:/etc/cortex-config/cortex.yaml
+  #   entrypoint:
+  #     - /bin/cortex
+  #     - -config.file=/etc/cortex-config/cortex.yaml
+  #   ports:
+  #     - "127.0.0.1:9009:9009"
+  #   networks:
+  #     - otlp_network
+  #   labels:
+  #     - com.host.plane=cp
 
 # Temporal services
 

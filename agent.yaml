@@ -1,0 +1,255 @@
+# This file serves as an example agent configuration to interact with the
+# docker compose environment.
+#
+# You should pass the following command line flags when running the agent
+# locally and using this file:
+#
+#   -enable-features=integrations-next -config.expand-env -config.enable-read-api
+#
+# -enable-features=integrations-next is required as the file is configured for
+# the integrations revamp.
+#
+# -config.expand-env is required to expand environment variables. Environment
+# variables are used when running the agent inside of docker-compose to connect
+# to the other services. When running the agent externally, the expressions will
+# default to the appropriate values of the exposed ports.
+#
+# -config.enable-read-api is optional, but allows you to invoke the /-/config
+# endpoint to examine the generated config.
+
+server:
+  log_level: debug
+
+metrics:
+  global:
+    scrape_interval: 60s
+    remote_write:
+    - url: http://${REMOTE_WRITE_HOST:-localhost:9009}/api/prom/push
+  configs:
+  - name: default
+    scrape_configs:
+      - job_name: 'jaeger'
+
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 15s
+
+        static_configs:
+            - targets: ['otel-test-jaeger:14269']
+
+      - job_name: 'tempo'
+
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 15s
+
+        static_configs:
+            - targets: ['otel-test-tempo:3200']
+
+      - job_name: 'service-a'
+
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 15s
+
+        static_configs:
+            - targets: ['otel-test-service-a:9090']
+
+      - job_name: 'service-b'
+
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 15s
+
+        static_configs:
+            - targets: ['otel-test-service-b:9090']
+
+      - job_name: 'service-c'
+
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 15s
+
+        static_configs:
+            - targets: ['otel-test-service-c:9090']
+
+      - job_name: 'service-d'
+
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 15s
+
+        static_configs:
+              - targets: ['otel-test-service-d:9090']
+
+      - job_name: 'service-e'
+
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 15s
+
+        static_configs:
+              - targets: ['otel-test-service-e:9090']
+
+      - job_name: 'service-f'
+
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 15s
+
+        static_configs:
+              - targets: ['otel-test-service-f:9090']
+logs:
+  configs:
+  - name: default
+    clients:
+      - url: http://${LOKI_HOST:-localhost:3100}/loki/api/v1/push
+    positions:
+      filename: /tmp/positions.yaml
+    scrape_configs:
+      - job_name: otel-test-dp
+        # use docker.sock to filter containers
+        docker_sd_configs:
+          - host: "unix:///var/run/docker.sock"
+            refresh_interval: 15s
+            filters:
+              - name: label
+                values: ["com.host.plane=dp"]
+        relabel_configs:
+          - source_labels: ['__meta_docker_container_name']
+            regex: '/(.*)'
+            target_label: 'container'
+        pipeline_stages:
+          - json:
+              expressions:
+                output: text
+                timestamp: "record.time.repr"
+                record: record
+                level: "record.level.name"
+                x_service_name: "record.extra.service_letter"
+                span_id: "record.extra.span_id"
+                trace_id: "record.extra.trace_id"
+                x_request_id: "record.extra.x_request_id"
+          - labels:
+              level: level
+              full_log_body: record
+              x_service_name: x_service_name
+              span_id: span_id
+              trace_id: trace_id
+              x_request_id: x_request_id
+          - timestamp:
+              format: RFC3339
+              source: timestamp
+          - output:
+              source: output
+
+      - job_name: otel-test-cp
+        # use docker.sock to filter containers
+        docker_sd_configs:
+          - host: "unix:///var/run/docker.sock"
+            refresh_interval: 15s
+            filters:
+              - name: label
+                values: ["com.host.plane=cp"]
+        # use container name to create a loki label
+        relabel_configs:
+          - source_labels: ['__meta_docker_container_name']
+            regex: '/(.*)'
+            target_label: 'container'
+
+traces:
+  configs:
+  - name: default
+    remote_write:
+      - endpoint: ${TEMPO_HOST:-localhost:4317}
+        insecure: true
+    receivers:
+      jaeger:
+        protocols:
+          thrift_http:
+
+#
+# Integrations
+#
+# Uncomment individual integrations below to enable them. Some integrations are
+# enabled by default.
+#
+
+integrations:
+  metrics:
+    autoscrape:
+      enable: true
+      metrics_instance: default
+
+  # agent
+  agent:
+    # The Agent dashboards are written to assume Kubernetes, so we inject some
+    # fake Kubernetes labels here.
+    extra_labels:
+      cluster: docker-compose
+      namespace: docker-compose
+      container: grafana-agent
+      pod: grafana-agent-${HOSTNAME:-example}
+
+  ## node_exporter
+  # node_exporter: {}
+
+  ## process
+  # process:
+  #   process_names:
+  #     - name: "{{.Comm}}"
+  #       cmdline:
+  #       - '.+'
+
+  ## mysql (requires docker-compose mysql profile)
+  # mysql_configs:
+  # - data_source_name: root@(${MYSQL_HOST:-localhost:3306})/
+
+  ## postgres (requires docker-compose postgres profile)
+  # postgres_configs:
+  # - data_source_names:
+  #   - postgresql://postgres:password@localhost:5432/postgres?sslmode=disable
+
+  ## redis (requires docker-compose redis profile)
+  # redis_configs:
+  # - redis_addr: ${REDIS_HOST:-localhost:6379}
+
+  ## dnsmasq (requires docker-compose dnsmasq profile)
+  # dnsmasq_configs:
+  # - dnsmasq_address: ${DNSMASQ_HOST:-localhost:30053}
+  #   leases_path: /tmp/dnsmasq-leases/dnsmasq.leases
+
+  ## memcached (requires docker-compose memcached profile)
+  # memcached_configs:
+  # - memcached_address: ${MEMCACHED_HOST:-localhost:11211}
+  #   timeout: 10s
+
+  ## statsd
+  # statsd: {}
+
+  ## consul (requires docker-compose consul profile)
+  # consul_configs:
+  # - server: http://${CONSUL_HOST:-localhost:8500}
+
+  ## elasticsearch (requires docker-compose elasticsearch profile)
+  # elasticsearch_configs:
+  # - address: http://${ELASTICSEARCH_HOST:-localhost:9200}
+
+  ## kafka (requires docker-compose kafka profile)
+  # kafka_configs:
+  # - kafka_uris: [${KAFKA_HOST:-localhost:9093}]
+
+  ## github (requires docker-compose github profile)
+  # github_configs:
+  # - repositories:
+  #   - grafana/agent
+
+  ## mongodb (requires docker-compose mongodb profile)
+  # mongodb_configs:
+  # - mongodb_uri: mongodb://${MONGODB_HOST:-mongodb:27017}
+  #   relabel_configs:
+  #   - source_labels: [__address__]
+  #     target_label: service_name
+  #     replacement: 'mongodb'
+  #   - source_labels: [__address__]
+  #     target_label: mongodb_cluster
+  #     replacement: 'mongodb-cluster'
+
+  ## cadvisor
+  # cadvisor:
+  #   disabled_metrics:
+  #   - disk
+  #   enabled_metrics:
+  #   - percpu

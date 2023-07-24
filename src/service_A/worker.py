@@ -19,14 +19,13 @@ TASK_QUEUE: str = f"service_{SERVICE_LETTER}_queue"
 
 @activity.defn(name="service_a_activity_01")
 async def service_a_activity_01(x_request_id: str) -> str:
-    with tracer.start_as_current_span("EXECUTE-A-ACTIVITY") as span:
+    with tracer.start_as_current_span("EXECUTE-A-ACTIVITY", kind=trace.SpanKind.SERVER) as span:
 
         span.set_attribute("x_request_id", x_request_id)
         span.set_attribute("service_letter", SERVICE_LETTER)
         
         logger.info(
             f"Execute {activity.info().activity_type}",
-            span=span,
             x_request_id=x_request_id,
             service_letter=SERVICE_LETTER,
         )
@@ -46,7 +45,7 @@ class ServiceAWorkflow:
             span.set_attribute("x_request_id", x_request_id)
             span.set_attribute("service_letter", SERVICE_LETTER)
 
-            with tracer.start_as_current_span("RUN-A-ACTIVITY") as span:
+            with tracer.start_as_current_span("RUN-A-ACTIVITY", kind=trace.SpanKind.CLIENT) as span:
 
                 span.set_attribute("x_request_id", x_request_id)
                 span.set_attribute("service_letter", SERVICE_LETTER)
@@ -57,11 +56,19 @@ class ServiceAWorkflow:
                     task_queue=TASK_QUEUE,
                     start_to_close_timeout=timedelta(seconds=5),
                 )
-            with tracer.start_as_current_span("RUN-B-WORKFLOW") as span:
+            with tracer.start_as_current_span("RUN-B-WORKFLOW", kind=trace.SpanKind.CLIENT) as span:
+
+                span.set_attribute("x_request_id", x_request_id)
+                span.set_attribute("service_letter", SERVICE_LETTER)
+
                 result_b = await workflow.execute_child_workflow(
-                    "Service-B-workflow", arg=result_a, task_queue="service_B_queue"
+                    "Service-B-workflow", arg=result_a, task_queue="service_B_queue", id=str(uuid4())
                 )
-            with tracer.start_as_current_span("RUN-C-WORKFLOW") as span:
+            with tracer.start_as_current_span("RUN-C-WORKFLOW", kind=trace.SpanKind.CLIENT) as span:
+
+                span.set_attribute("x_request_id", x_request_id)
+                span.set_attribute("service_letter", SERVICE_LETTER)
+
                 result = await workflow.execute_child_workflow(
                     "Service-C-workflow", arg=result_b, task_queue="service_C_queue"
                 )
@@ -71,13 +78,14 @@ class ServiceAWorkflow:
 async def run_service():
     runtime = Runtime(
         telemetry=TelemetryConfig(
+            # metrics=OpenTelemetryConfig(f"http://0.0.0.0:{PROMETHEUS_PORT}")
             metrics=PrometheusConfig(bind_address=f"0.0.0.0:{PROMETHEUS_PORT}"),
         )
     )
 
     client = await Client.connect(
         target_host=TEMPORAL_ENDPOINT,
-        interceptors=[TracingInterceptor()],
+        interceptors=[TracingInterceptor(tracer=tracer)],
         runtime=runtime,
     )
     worker = Worker(

@@ -44,12 +44,7 @@ def setup_logging():
         
         base_fmt = ""
         extra: dict = record.get('extra', dict())
-        span = extra.get("span")
-        if span:
-            extra.pop("span")
-            record["extra"]["trace_id"] = str(span.get_span_context().trace_id)
-            record["extra"]["span_id"] = str(span.get_span_context().span_id)
-              
+
         exception = record.get('exception')
 
         if exception:

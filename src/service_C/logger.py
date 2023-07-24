@@ -6,10 +6,12 @@ from env import LOG_JSON, LOG_LEVEL
 
 
 class InterceptHandler(logging.Handler):
+
     def emit(self, record):
         extra_data: dict = dict()
         try:
             # Trying to catch `trace_id` and exclude None, if cought
+            
             assert record.trace_id
             extra_data['trace_id'] = record.trace_id
         except (AttributeError, AssertionError):
@@ -39,14 +41,12 @@ def setup_logging():
     logging.root.handlers = [InterceptHandler()]
 
     def formatter(record):
+        
         base_fmt = ""
         extra: dict = record.get('extra', dict())
+
         exception = record.get('exception')
-        try:
-            trace_id = extra['trace_id']
-            base_fmt = base_fmt + f" | [{trace_id}]"
-        except KeyError:
-            pass
+
         if exception:
             extra["traceback"] = "\n" + \
                 "".join(traceback.format_exception(extra['exc_info'][1]))
