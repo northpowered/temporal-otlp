@@ -10,6 +10,8 @@ from env import SERVICE_LETTER, PROMETHEUS_PORT, TEMPORAL_ENDPOINT, TEMPO_ENDPOI
 from logger import setup_logging
 from loguru import logger
 from uuid import uuid4
+import os
+
 
 setup_logging()
 
@@ -41,7 +43,7 @@ class ServiceAWorkflow:
         ) as span:
             
             x_request_id: str = str(uuid4())
-
+            span.set_attribute("x_pid", str(os.getpid()))
             span.set_attribute("x_request_id", x_request_id)
             span.set_attribute("service_letter", SERVICE_LETTER)
 

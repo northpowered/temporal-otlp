@@ -24,6 +24,16 @@ compactor:
     block_retention: 1h                # overall Tempo trace retention. set for demo purposes
 
 metrics_generator:
+
+  processor:
+
+    service_graphs:
+      wait: 30s
+      # Workers is the amount of workers that will be used to process the edges
+      workers: 20
+      dimensions:
+        - service.name
+
   registry:
     external_labels:
       source: tempo

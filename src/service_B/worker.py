@@ -9,7 +9,7 @@ from tracer import tracer, trace
 from env import SERVICE_LETTER, PROMETHEUS_PORT, TEMPORAL_ENDPOINT
 from logger import setup_logging
 from loguru import logger
-
+import os
 
 setup_logging()
 
@@ -42,7 +42,7 @@ class ServiceWorkflow:
             
             span.set_attribute("x_request_id", x_request_id)
             span.set_attribute("service_letter", SERVICE_LETTER)
-
+            span.set_attribute("x_pid", str(os.getpid()))
             with tracer.start_as_current_span(f"RUN-{SERVICE_LETTER}-ACTIVITY", kind=trace.SpanKind.CLIENT) as span:
 
                 span.set_attribute("x_request_id", x_request_id)

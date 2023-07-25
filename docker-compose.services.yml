@@ -9,6 +9,7 @@ x-service-template:
     - otlp_network
   labels:
       - com.host.plane=dp
+  #pid: "host"
 
 
 services:

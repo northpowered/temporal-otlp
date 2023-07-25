@@ -1,7 +1,7 @@
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace import TracerProvider, sampling
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from env import SERVICE_LETTER, JAEGER_HOST, JAEGER_PORT, TEMPO_ENDPOINT
@@ -9,7 +9,7 @@ from env import SERVICE_LETTER, JAEGER_HOST, JAEGER_PORT, TEMPO_ENDPOINT
 
 trace.set_tracer_provider(
     TracerProvider(
-        resource=Resource.create({SERVICE_NAME: f"Service_{SERVICE_LETTER}"})
+        resource=Resource.create({SERVICE_NAME: f"Service_{SERVICE_LETTER}"}),
     )
 )
 
