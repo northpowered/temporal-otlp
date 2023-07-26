@@ -1,6 +1,6 @@
 from temporalio import workflow, activity
-from temporalio.contrib.opentelemetry import TracingInterceptor
-from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig, TracingConfig, OpenTelemetryConfig
+from temporalopentelemetry import TracingInterceptor
+from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig
 from temporalio.client import Client
 from temporalio.worker import Worker
 import asyncio
@@ -38,6 +38,7 @@ async def service_a_activity_01(x_request_id: str) -> str:
 class ServiceAWorkflow:
     @workflow.run
     async def run(self):
+        
         with tracer.start_as_current_span(
             "MAIN-A-RUN", kind=trace.SpanKind.SERVER
         ) as span:
@@ -46,6 +47,7 @@ class ServiceAWorkflow:
             span.set_attribute("x_pid", str(os.getpid()))
             span.set_attribute("x_request_id", x_request_id)
             span.set_attribute("service_letter", SERVICE_LETTER)
+            
 
             with tracer.start_as_current_span("RUN-A-ACTIVITY", kind=trace.SpanKind.CLIENT) as span:
 
@@ -74,7 +76,8 @@ class ServiceAWorkflow:
                 result = await workflow.execute_child_workflow(
                     "Service-C-workflow", arg=result_b, task_queue="service_C_queue"
                 )
-            return result
+        
+        return result
 
 
 async def run_service():

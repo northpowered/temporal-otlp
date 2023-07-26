@@ -1,5 +1,5 @@
 from temporalio import workflow, activity
-from temporalio.contrib.opentelemetry import TracingInterceptor
+from temporalopentelemetry import TracingInterceptor
 from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig
 from temporalio.client import Client
 from temporalio.worker import Worker
@@ -54,7 +54,7 @@ class ServiceWorkflow:
                     task_queue=TASK_QUEUE,
                     start_to_close_timeout=timedelta(seconds=5)
                 )
-                return result
+        return result
 
 
 async def run_service():
