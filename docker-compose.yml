@@ -4,45 +4,25 @@ services:
 
 # Monitoring  tools
 
-  otel-test-jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: otel-test-jaeger
-    hostname: otel-test-jaeger
-    ports:
-      - "127.0.0.1:6831:6831/udp"
-      - "127.0.0.1:16686:16686"
-      - "127.0.0.1:16687:16687"
-      - "127.0.0.1:16685:16685"
-      - "127.0.0.1:14269:14269"
-    environment:
-      -  METRICS_STORAGE_TYPE=prometheus
-      -  PROMETHEUS_SERVER_URL=http://otel-test-prometheus:9090
-      -  PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=true
-      -  MONITOR_MENU_ENABLED=true
-    networks:
-      - otlp_network
-    labels:
-      - com.host.plane=cp
-
-  otel-test-prometheus:
-    image: prom/prometheus:latest
-    container_name: otel-test-prometheus
-    hostname: otel-test-prometheus
-    volumes:
-      - ./prometheus/:/etc/prometheus/
-      - ./prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-remote-write-receiver'
-    ports:
-      - "127.0.0.1:9090:9090"
-    networks:
-      - otlp_network
-    labels:
-      - com.host.plane=cp
+  # otel-test-jaeger:
+  #   image: jaegertracing/all-in-one:latest
+  #   container_name: otel-test-jaeger
+  #   hostname: otel-test-jaeger
+  #   ports:
+  #     - "127.0.0.1:6831:6831/udp"
+  #     - "127.0.0.1:16686:16686"
+  #     - "127.0.0.1:16687:16687"
+  #     - "127.0.0.1:16685:16685"
+  #     - "127.0.0.1:14269:14269"
+  #   environment:
+  #     -  METRICS_STORAGE_TYPE=prometheus
+  #     -  PROMETHEUS_SERVER_URL=http://otel-test-prometheus:9090
+  #     -  PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=true
+  #     -  MONITOR_MENU_ENABLED=true
+  #   networks:
+  #     - otlp_network
+  #   labels:
+  #     - com.host.plane=cp
 
   otel-test-grafana:
     image: grafana/grafana:9.4.3
@@ -86,11 +66,11 @@ services:
     image: grafana/loki:latest
     container_name: otel-test-loki
     hostname: otel-test-loki
+    command: -config.file=/home/loki/production/loki.yaml
     ports:
       - "127.0.0.1:3100:3100"
     volumes:
-      # directory must be created first, with uid:gid 10001:10001
-      - ./loki:/loki
+       - ./config/loki.yaml:/home/loki/production/loki.yaml
     networks:
       - otlp_network
     labels:

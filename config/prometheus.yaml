@@ -1,33 +1,24 @@
-# my global config
 global:
-  scrape_interval:     15s # By default, scrape targets every 15 seconds.
-  evaluation_interval: 15s # By default, scrape targets every 15 seconds.
-  # scrape_timeout is set to the global default (10s).
-
-  # Attach these labels to any time series or alerts when communicating with
-  # external systems (federation, remote storage, Alertmanager).
+  scrape_interval: 5s
   external_labels:
-      monitor: 'my-project'
+    cluster: demo
+    namespace: demo
 
-# Load and evaluate rules in this file every 'evaluation_interval' seconds.
-# rule_files:
-#   - 'alert.rules'
-#   # - "first.rules"
-#   # - "second.rules"
+rule_files:
+  - /etc/prometheus/rules.yaml
 
-# alert
-# alerting:
-#   alertmanagers:
-#   - scheme: http
-#     static_configs:
-#     - targets:
-#       - "alertmanager:9093"
-
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
 scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-
+  - job_name: demo/mimir
+    static_configs:
+      - targets: ["mimir-1:8080"]
+        labels:
+          pod: "mimir-1"
+      - targets: ["mimir-2:8080"]
+        labels:
+          pod: "mimir-2"
+      - targets: ["mimir-3:8080"]
+        labels:
+          pod: "mimir-3"
   - job_name: 'prometheus'
 
     # Override the global default and scrape targets from this job every 5 seconds.
@@ -99,3 +90,9 @@ scrape_configs:
 
     static_configs:
           - targets: ['otel-test-service-f:9090']
+remote_write:
+  - url: http://load-balancer:9009/api/v1/push
+    # Add X-Scope-OrgID header so that Mimir knows what tenant the remote write data should be stored in.
+    # In this case, our tenant is "demo"
+    headers:
+      X-Scope-OrgID: demo
