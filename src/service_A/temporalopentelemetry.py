@@ -158,8 +158,9 @@ class TracingInterceptor(temporalio.client.Interceptor, temporalio.worker.Interc
         *,
         attributes: opentelemetry.util.types.Attributes,
         input: Optional[_InputWithHeaders] = None,
+        kind: opentelemetry.trace.SpanKind = opentelemetry.trace.SpanKind.INTERNAL
     ) -> Iterator[None]:
-        with self.tracer.start_as_current_span(name, attributes=attributes):
+        with self.tracer.start_as_current_span(name, attributes=attributes, kind=kind):
             if input:
                 input.headers = self._context_to_headers(input.headers)
             yield None
@@ -219,6 +220,7 @@ class _TracingClientOutboundInterceptor(temporalio.client.OutboundInterceptor):
             f"{prefix}:{input.workflow}",
             attributes={"temporalWorkflowID": input.id},
             input=input,
+            kind=opentelemetry.trace.SpanKind.CLIENT
         ):
             return await super().start_workflow(input)
 
@@ -227,6 +229,7 @@ class _TracingClientOutboundInterceptor(temporalio.client.OutboundInterceptor):
             f"QueryWorkflow:{input.query}",
             attributes={"temporalWorkflowID": input.id},
             input=input,
+            kind=opentelemetry.trace.SpanKind.INTERNAL
         ):
             return await super().query_workflow(input)
 
@@ -237,6 +240,7 @@ class _TracingClientOutboundInterceptor(temporalio.client.OutboundInterceptor):
             f"SignalWorkflow:{input.signal}",
             attributes={"temporalWorkflowID": input.id},
             input=input,
+            kind=opentelemetry.trace.SpanKind.INTERNAL
         ):
             return await super().signal_workflow(input)
 
@@ -262,7 +266,6 @@ class _TracingActivityInboundInterceptor(temporalio.worker.ActivityInboundInterc
                 "temporalRunID": info.workflow_run_id,
                 "temporalActivityID": info.activity_id,
             },
-            # Local kind provider
             kind=opentelemetry.trace.SpanKind.SERVER
         ):
             return await super().execute_activity(input)
@@ -361,6 +364,7 @@ class TracingWorkflowInboundInterceptor(temporalio.worker.WorkflowInboundInterce
             self._completed_span(
                 f"HandleSignal:{input.signal}",
                 link_context_carrier=link_context_carrier,
+                kind=opentelemetry.trace.SpanKind.INTERNAL
             )
             await super().handle_signal(input)
 
@@ -394,6 +398,7 @@ class TracingWorkflowInboundInterceptor(temporalio.worker.WorkflowInboundInterce
                 link_context_carrier=link_context_carrier,
                 # Create even on replay for queries
                 new_span_even_on_replay=True,
+                kind=opentelemetry.trace.SpanKind.INTERNAL
             )
             return await super().handle_query(input)
         finally:
@@ -443,6 +448,7 @@ class TracingWorkflowInboundInterceptor(temporalio.worker.WorkflowInboundInterce
                 self._completed_span(
                     f"CompleteWorkflow:{temporalio.workflow.info().workflow_type}",
                     exception=exception,
+                    kind=opentelemetry.trace.SpanKind.INTERNAL
                 )
             opentelemetry.context.detach(token)
 
@@ -543,7 +549,9 @@ class _TracingWorkflowOutboundInterceptor(
     ) -> None:
         # Create new span and put on outbound input
         self.root._completed_span(
-            f"SignalChildWorkflow:{input.signal}", add_to_outbound=input
+            f"SignalChildWorkflow:{input.signal}",
+            add_to_outbound=input,
+            kind=opentelemetry.trace.SpanKind.INTERNAL
         )
         await super().signal_child_workflow(input)
 
@@ -552,7 +560,9 @@ class _TracingWorkflowOutboundInterceptor(
     ) -> None:
         # Create new span and put on outbound input
         self.root._completed_span(
-            f"SignalExternalWorkflow:{input.signal}", add_to_outbound=input
+            f"SignalExternalWorkflow:{input.signal}",
+            add_to_outbound=input,
+            kind=opentelemetry.trace.SpanKind.INTERNAL
         )
         await super().signal_external_workflow(input)
 
@@ -561,7 +571,8 @@ class _TracingWorkflowOutboundInterceptor(
     ) -> temporalio.workflow.ActivityHandle:
         # Create new span and put on outbound input
         self.root._completed_span(
-            f"StartActivity:{input.activity}", add_to_outbound=input,
+            f"StartActivity:{input.activity}",
+            add_to_outbound=input,
             kind=opentelemetry.trace.SpanKind.CLIENT
         )
         return super().start_activity(input)
@@ -571,7 +582,8 @@ class _TracingWorkflowOutboundInterceptor(
     ) -> temporalio.workflow.ChildWorkflowHandle:
         # Create new span and put on outbound input
         self.root._completed_span(
-            f"StartChildWorkflow:{input.workflow}", add_to_outbound=input,
+            f"StartChildWorkflow:{input.workflow}",
+            add_to_outbound=input,
             kind=opentelemetry.trace.SpanKind.CLIENT
         )
         return await super().start_child_workflow(input)
@@ -581,7 +593,8 @@ class _TracingWorkflowOutboundInterceptor(
     ) -> temporalio.workflow.ActivityHandle:
         # Create new span and put on outbound input
         self.root._completed_span(
-            f"StartActivity:{input.activity}", add_to_outbound=input,
+            f"StartActivity:{input.activity}",
+            add_to_outbound=input,
             kind=opentelemetry.trace.SpanKind.CLIENT
         )
         return super().start_local_activity(input)
