@@ -30,16 +30,9 @@ services:
     volumes:
       - ./config/loki.yaml:/etc/loki/loki.yaml
       - ./rules:/loki/rules:ro
-    # only needed for interactive debugging with dlv
-    # cap_add:
-    #   - SYS_PTRACE
-    # security_opt:
-    #   - apparmor=unconfined
     ports:
       - "3100"
       - "7946"
-      # uncomment to use interactive debugging
-      # - "40000-40002:40000" # makes the replicas available on ports 40000, 40001, 40002
     command: "-config.file=/etc/loki/loki.yaml -target=read"
     networks:
       - otlp_network
@@ -54,16 +47,9 @@ services:
     image: *lokiImage
     volumes:
       - ./config:/etc/loki/
-    # only needed for interactive debugging with dlv
-    # cap_add:
-    #   - SYS_PTRACE
-    # security_opt:
-    #   - apparmor=unconfined
     ports:
       - "3100"
       - "7946"
-      # uncomment to use interactive debugging
-      # - "50000-50002:40000" #  makes the replicas available on ports 50000, 50001, 50002
     command: "-config.file=/etc/loki/loki.yaml -target=write"
     networks:
       - otlp_network
@@ -73,28 +59,6 @@ services:
       replicas: 3
     labels:
       - com.host.plane=cp
-
-  # loki-backend:
-  #   image: *lokiImage
-  #   volumes:
-  #     - ./config:/etc/loki/
-  #   # only needed for interactive debugging with dlv
-  #   # cap_add:
-  #   #   - SYS_PTRACE
-  #   # security_opt:
-  #   #   - apparmor=unconfined
-  #   ports:
-  #     - "3100"
-  #     - "7946"
-  #     # uncomment to use interactive debugging
-  #     # - "60000-60002:40000" #  makes the replicas available on ports 60000, 60001, 60002
-  #   command: "-config.file=/etc/loki/loki.yaml -target=backend"
-  #   networks:
-  #     - otlp_network
-  #   restart: always
-  #   deploy:
-  #     mode: replicated
-  #     replicas: 3
 
   # alertmanager to enable receiving alerts
   alertmanager:
@@ -110,20 +74,12 @@ services:
     networks:
       - otlp_network
 
-
-
-
-
-
   otel-test-promtail:
     image: grafana/promtail:latest
     container_name: otel-test-promtail
     hostname: otel-test-promtail
     volumes:
-      # custom config will read logs from the containers of
-      # this project
-      - ./promtail-config.yaml:/etc/promtail/config.yml
-      # to read container labels and logs
+      - ./config/promtail.yaml:/etc/promtail/config.yml
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/var/lib/docker/containers
     networks:

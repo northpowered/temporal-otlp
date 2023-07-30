@@ -145,3 +145,4 @@ cython_debug/
 # Local:
 prometheus_data
 loki
+grafana_data/plugins

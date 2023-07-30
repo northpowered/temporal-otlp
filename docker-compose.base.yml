@@ -13,16 +13,18 @@ services:
 
   otel-test-grafana:
   # Yes, u know this app
-    image: grafana/grafana:9.4.3
+    image: grafana/grafana:10.0.3
     container_name: otel-test-grafana
     hostname: otel-test-grafana
     volumes:
       - ./grafana_data:/var/lib/grafana
     environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      # - GF_AUTH_ANONYMOUS_ENABLED=true
+      # - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      # - GF_AUTH_DISABLE_LOGIN_FORM=true
       - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-oncall-app
+      - GF_INSTALL_PLUGINS=grafana-oncall-app
     ports:
       - "127.0.0.1:3000:3000"
     networks:
@@ -68,7 +70,7 @@ services:
         - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
       ports:
         - "9009:9009"
-        - "8080:80"
+        #- "8080:80"
         - "3100"
       networks:
         - otlp_network

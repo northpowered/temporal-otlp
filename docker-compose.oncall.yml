@@ -1,0 +1,104 @@
+version: "3.9"
+
+networks:
+  otlp_network:
+    name: otlp_network
+    external: true
+
+
+volumes:
+  oncall_data:
+  redis_data:
+
+x-environment: &oncall-environment
+  DATABASE_TYPE: sqlite3
+  DATABASE_NAME: /var/lib/oncall/oncall.db
+  BROKER_TYPE: redis
+  BASE_URL: http://localhost:8080
+  SECRET_KEY: jyRnfRIeMjYfKdoFa9dKXcNaEGGc8GH1TChmYoWW
+  FEATURE_PROMETHEUS_EXPORTER_ENABLED: "True"
+  #PROMETHEUS_EXPORTER_SECRET: ${PROMETHEUS_EXPORTER_SECRET:-}
+  REDIS_URI: redis://redis:6379/0
+  DJANGO_SETTINGS_MODULE: settings.hobby
+  CELERY_WORKER_QUEUE: "default,critical,long,slack,telegram,webhook,retry,celery"
+  CELERY_WORKER_CONCURRENCY: "1"
+  CELERY_WORKER_MAX_TASKS_PER_CHILD: "100"
+  CELERY_WORKER_SHUTDOWN_INTERVAL: "65m"
+  CELERY_WORKER_BEAT_ENABLED: "True"
+  GRAFANA_API_URL: http://otel-test-grafana:3000
+
+services:
+
+  engine:
+    image: grafana/oncall:latest
+    restart: always
+    hostname: oncall
+    ports:
+      - "127.0.0.1:8080:8080"
+    command: >
+      sh -c "uwsgi --ini uwsgi.ini"
+    environment: *oncall-environment
+    volumes:
+      - oncall_data:/var/lib/oncall
+    depends_on:
+      oncall_db_migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  celery:
+    image: grafana/oncall:latest
+    restart: always
+    command: sh -c "./celery_with_exporter.sh"
+    environment: *oncall-environment
+    volumes:
+      - oncall_data:/var/lib/oncall
+    depends_on:
+      oncall_db_migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  oncall_db_migration:
+    image: grafana/oncall:latest
+    command: python manage.py migrate --noinput
+    environment: *oncall-environment
+    volumes:
+      - oncall_data:/var/lib/oncall
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  redis:
+    image: redis:7.0.5
+    restart: always
+    expose:
+      - 6379
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
