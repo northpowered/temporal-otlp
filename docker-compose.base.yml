@@ -41,7 +41,8 @@ services:
       - |
         mkdir -p /data/loki-data && \
         mkdir -p /data/loki-ruler && \
-        mkdir -p /data/mimir &&
+        mkdir -p /data/mimir && \
+        mkdir -p /data/tempo &&
         minio server /data --console-address :9001
     environment:
       - MINIO_ROOT_USER=superuser

@@ -13,7 +13,7 @@ services:
     hostname: otel-test-tempo
     command: ["-config.file=/etc/tempo.yaml" ]
     volumes:
-      - ./tempo.yaml:/etc/tempo.yaml
+      - ./config/tempo.yaml:/etc/tempo.yaml
     ports:
       - "127.0.0.1:14268:14268"  # jaeger ingest
       - "127.0.0.1:3200:3200"   # tempo

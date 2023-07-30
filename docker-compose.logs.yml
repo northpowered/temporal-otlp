@@ -99,7 +99,8 @@ services:
   # alertmanager to enable receiving alerts
   alertmanager:
     image: prom/alertmanager:v0.23.0
-    restart: unless-stopped
+    restart: always
+    hostname: alertmanager
     ports:
       - "9093:9093"
     volumes:

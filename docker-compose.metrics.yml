@@ -14,54 +14,50 @@ volumes:
 
 services:
 
+  mimir-1:
+    image: grafana/mimir:latest
+    command: ["-config.file=/etc/mimir.yaml"]
+    hostname: mimir-1
+    # depends_on:
+    #   - minio
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - mimir-1-data:/data
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
 
+  mimir-2:
+    image: grafana/mimir:latest
+    command: ["-config.file=/etc/mimir.yaml"]
+    hostname: mimir-2
+    # depends_on:
+    #   - minio
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - mimir-2-data:/data
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
 
-
-
-  # mimir-1:
-  #   image: grafana/mimir:latest
-  #   command: ["-config.file=/etc/mimir.yaml"]
-  #   hostname: mimir-1
-  #   # depends_on:
-  #   #   - minio
-  #   volumes:
-  #     - ./config/mimir.yaml:/etc/mimir.yaml
-  #     - ./config/alertmanager-fallback-config.yaml:/etc/alertmanager-fallback-config.yaml
-  #     - mimir-1-data:/data
-  #   networks:
-  #     - otlp_network
-  #   labels:
-  #     - com.host.plane=cp
-
-  # mimir-2:
-  #   image: grafana/mimir:latest
-  #   command: ["-config.file=/etc/mimir.yaml"]
-  #   hostname: mimir-2
-  #   # depends_on:
-  #   #   - minio
-  #   volumes:
-  #     - ./config/mimir.yaml:/etc/mimir.yaml
-  #     - ./config/alertmanager-fallback-config.yaml:/etc/alertmanager-fallback-config.yaml
-  #     - mimir-2-data:/data
-  #   networks:
-  #     - otlp_network
-  #   labels:
-  #     - com.host.plane=cp
-
-  # mimir-3:
-  #   image: grafana/mimir:latest
-  #   command: ["-config.file=/etc/mimir.yaml"]
-  #   hostname: mimir-3
-  #   # depends_on:
-  #   #   - minio
-  #   volumes:
-  #     - ./config/mimir.yaml:/etc/mimir.yaml
-  #     - ./config/alertmanager-fallback-config.yaml:/etc/alertmanager-fallback-config.yaml
-  #     - mimir-3-data:/data
-  #   networks:
-  #     - otlp_network
-  #   labels:
-  #     - com.host.plane=cp
+  mimir-3:
+    image: grafana/mimir:latest
+    command: ["-config.file=/etc/mimir.yaml"]
+    hostname: mimir-3
+    # depends_on:
+    #   - minio
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - mimir-3-data:/data
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
 
 
   otel-test-prometheus:
@@ -82,7 +78,7 @@ services:
       - otlp_network
     labels:
       - com.host.plane=cp
-    depends_on:
-      - "mimir-1"
-      - "mimir-2"
-      - "mimir-3"
+    # depends_on:
+    #   - "mimir-1"
+    #   - "mimir-2"
+    #   - "mimir-3"

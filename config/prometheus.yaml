@@ -1,14 +1,14 @@
 global:
   scrape_interval: 5s
-  external_labels:
-    cluster: demo
-    namespace: demo
+  # external_labels:
+  #   cluster: demo
+  #   namespace: demo
 
 rule_files:
   - /etc/prometheus/rules.yaml
 
 scrape_configs:
-  - job_name: demo/mimir
+  - job_name: otlp-test/mimir
     static_configs:
       - targets: ["mimir-1:8080"]
         labels:
@@ -19,7 +19,8 @@ scrape_configs:
       - targets: ["mimir-3:8080"]
         labels:
           pod: "mimir-3"
-  - job_name: 'prometheus'
+  
+  - job_name: 'otlp-test/prometheus'
 
     # Override the global default and scrape targets from this job every 5 seconds.
     scrape_interval: 15s
@@ -27,13 +28,6 @@ scrape_configs:
     static_configs:
          - targets: ['localhost:9090']
 
-  - job_name: 'jaeger'
-
-    # Override the global default and scrape targets from this job every 5 seconds.
-    scrape_interval: 15s
-
-    static_configs:
-         - targets: ['otel-test-jaeger:14269']
 
   - job_name: 'tempo'
 
@@ -95,4 +89,4 @@ remote_write:
     # Add X-Scope-OrgID header so that Mimir knows what tenant the remote write data should be stored in.
     # In this case, our tenant is "demo"
     headers:
-      X-Scope-OrgID: demo
+      X-Scope-OrgID: otlp-test
