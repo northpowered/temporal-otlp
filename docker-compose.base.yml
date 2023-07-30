@@ -1,0 +1,75 @@
+version: "3.7"
+
+networks:
+  otlp_network:
+    driver: bridge
+    name: otlp_network
+
+volumes:
+  minio-data:
+
+
+services:
+
+  otel-test-grafana:
+  # Yes, u know this app
+    image: grafana/grafana:9.4.3
+    container_name: otel-test-grafana
+    hostname: otel-test-grafana
+    volumes:
+      - ./grafana_data:/var/lib/grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+
+  minio:
+  # Minio is S3-compatible persistent storage for blocks, rules, and alerts
+    image: minio/minio:latest
+    hostname: minio
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /data/loki-data && \
+        mkdir -p /data/loki-ruler && \
+        mkdir -p /data/mimir &&
+        minio server /data --console-address :9001
+    environment:
+      - MINIO_ROOT_USER=superuser
+      - MINIO_ROOT_PASSWORD=supersecret
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+      - MINIO_UPDATE=off
+    volumes:
+      - minio-data:/data:rw
+      # - ./config/minio-init.sh:/minio-init.sh
+    ports:
+      - "127.0.0.1:9001:9001"
+      - "127.0.0.1:9000:9000"
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+
+  load-balancer:
+      image: nginx:latest
+      hostname: load-balancer
+      volumes:
+        - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      ports:
+        - "9009:9009"
+        - "8080:80"
+        - "3100"
+      networks:
+        - otlp_network
+      labels:
+        - com.host.plane=cp

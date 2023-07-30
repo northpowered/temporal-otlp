@@ -1,0 +1,29 @@
+version: "3.7"
+
+networks:
+  otlp_network:
+    name: otlp_network
+    external: true
+
+services:
+
+  otel-test-tempo:
+    image: grafana/tempo:latest
+    container_name: otel-test-tempo
+    hostname: otel-test-tempo
+    command: ["-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "127.0.0.1:14268:14268"  # jaeger ingest
+      - "127.0.0.1:3200:3200"   # tempo
+      - "127.0.0.1:9095:9095" # tempo grpc
+      - "127.0.0.1:4317:4317"  # otlp grpc
+      - "127.0.0.1:4318:4318"  # otlp http
+      - "127.0.0.1:9411:9411"   # zipkin
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  

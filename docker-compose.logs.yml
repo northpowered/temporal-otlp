@@ -1,0 +1,131 @@
+version: "3.8"
+
+networks:
+  otlp_network:
+    name: otlp_network
+    external: true
+
+volumes:
+  alertmanager-data:
+  loki:
+
+
+services:
+
+  init:
+    image: &lokiImage grafana/loki:2.8.3
+    user: root
+    entrypoint:
+      - "chown"
+      - "10001:10001"
+      - "/loki"
+    volumes:
+      - ./loki:/loki
+    networks:
+      - otlp_network
+
+
+  loki-read:
+    image: *lokiImage
+    volumes:
+      - ./config/loki.yaml:/etc/loki/loki.yaml
+      - ./rules:/loki/rules:ro
+    # only needed for interactive debugging with dlv
+    # cap_add:
+    #   - SYS_PTRACE
+    # security_opt:
+    #   - apparmor=unconfined
+    ports:
+      - "3100"
+      - "7946"
+      # uncomment to use interactive debugging
+      # - "40000-40002:40000" # makes the replicas available on ports 40000, 40001, 40002
+    command: "-config.file=/etc/loki/loki.yaml -target=read"
+    networks:
+      - otlp_network
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 3
+    labels:
+      - com.host.plane=cp
+
+  loki-write:
+    image: *lokiImage
+    volumes:
+      - ./config:/etc/loki/
+    # only needed for interactive debugging with dlv
+    # cap_add:
+    #   - SYS_PTRACE
+    # security_opt:
+    #   - apparmor=unconfined
+    ports:
+      - "3100"
+      - "7946"
+      # uncomment to use interactive debugging
+      # - "50000-50002:40000" #  makes the replicas available on ports 50000, 50001, 50002
+    command: "-config.file=/etc/loki/loki.yaml -target=write"
+    networks:
+      - otlp_network
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 3
+    labels:
+      - com.host.plane=cp
+
+  # loki-backend:
+  #   image: *lokiImage
+  #   volumes:
+  #     - ./config:/etc/loki/
+  #   # only needed for interactive debugging with dlv
+  #   # cap_add:
+  #   #   - SYS_PTRACE
+  #   # security_opt:
+  #   #   - apparmor=unconfined
+  #   ports:
+  #     - "3100"
+  #     - "7946"
+  #     # uncomment to use interactive debugging
+  #     # - "60000-60002:40000" #  makes the replicas available on ports 60000, 60001, 60002
+  #   command: "-config.file=/etc/loki/loki.yaml -target=backend"
+  #   networks:
+  #     - otlp_network
+  #   restart: always
+  #   deploy:
+  #     mode: replicated
+  #     replicas: 3
+
+  # alertmanager to enable receiving alerts
+  alertmanager:
+    image: prom/alertmanager:v0.23.0
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - "./config/alertmanager.yaml:/config/alertmanager.yaml"
+      - alertmanager-data:/data
+    command: --config.file=/config/alertmanager.yaml --log.level=debug
+    networks:
+      - otlp_network
+
+
+
+
+
+
+  otel-test-promtail:
+    image: grafana/promtail:latest
+    container_name: otel-test-promtail
+    hostname: otel-test-promtail
+    volumes:
+      # custom config will read logs from the containers of
+      # this project
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+      # to read container labels and logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp

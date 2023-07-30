@@ -1,0 +1,106 @@
+version: "3.7"
+
+networks:
+  otlp_network:
+    name: otlp_network
+    external: true
+
+
+services:
+
+# Temporal services
+
+  otel-test-elasticsearch:
+    container_name: otel-test-temporal-elasticsearch
+    hostname: otel-test-temporal-elasticsearch
+    environment:
+      - cluster.routing.allocation.disk.threshold_enabled=true
+      - cluster.routing.allocation.disk.watermark.low=512mb
+      - cluster.routing.allocation.disk.watermark.high=256mb
+      - cluster.routing.allocation.disk.watermark.flood_stage=128mb
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
+      - xpack.security.enabled=false
+    image: elasticsearch:${ELASTICSEARCH_VERSION}
+    networks:
+      - otlp_network
+    expose:
+      - 9200
+    volumes:
+      - /var/lib/elasticsearch/data
+    labels:
+      - com.host.plane=cp
+  
+  otel-test-postgresql:
+    container_name: otel-test-temporal-postgresql
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    image: postgres:${POSTGRESQL_VERSION}
+    networks:
+      - otlp_network
+    expose:
+      - 5432
+    volumes:
+      - /var/lib/postgresql/data
+    labels:
+      - com.host.plane=cp
+
+  otel-test-temporal:
+    container_name: otel-test-temporal
+    hostname: otel-test-temporal
+    depends_on:
+      - otel-test-postgresql
+      - otel-test-elasticsearch
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=otel-test-postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - ENABLE_ES=true
+      - ES_SEEDS=otel-test-elasticsearch
+      - ES_VERSION=v7
+    image: temporalio/auto-setup:${TEMPORAL_VERSION}
+    networks:
+      - otlp_network
+    ports:
+      - 7233:7233
+    labels:
+      - kompose.volume.type=configMap
+      - com.host.plane=cp
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  temporal-admin-tools:
+    container_name: otel-test-temporal-admin-tools
+    hostname: otel-test-temporal-admin-tools
+    depends_on:
+      - otel-test-temporal
+    environment:
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools:${TEMPORAL_VERSION}
+    networks:
+      - otlp_network
+    stdin_open: true
+    tty: true
+    labels:
+      - com.host.plane=cp
+
+  otel-test-temporal-ui:
+    container_name: otel-test-temporal-ui
+    hostname: otel-test-temporal-ui
+    depends_on:
+      - otel-test-temporal
+    environment:
+      - TEMPORAL_ADDRESS=otel-test-temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:${TEMPORAL_UI_VERSION}
+    networks:
+      - otlp_network
+    ports:
+      - 8081:8080
+    labels:
+      - com.host.plane=cp
+

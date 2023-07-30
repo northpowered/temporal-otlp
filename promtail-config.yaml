@@ -1,9 +1,13 @@
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
+  log_level: "info"
+
 
 clients:
-  - url: http://otel-test-loki:3100/loki/api/v1/push
+  - url: http://load-balancer:3100/loki/api/v1/push
+    tenant_id: docker
+
 
 scrape_configs:
   - job_name: otel-test-dp
