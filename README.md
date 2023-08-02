@@ -21,6 +21,13 @@ docker-compose -f docker-compose.temporal.yml up  # Temporal
 ./build.sh  # Services building and deployment
 ```
 
+### Usage
+```bash
+poetry shell
+poetry install --no-root
+python3 starter.py
+```
+
 ## Service graph
 
 ![sg](img/good_sg.png)
