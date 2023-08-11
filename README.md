@@ -7,7 +7,8 @@ Grafana stack deployment in production mode with Temporal microservices as small
 
 ## How does it works?
 
-###### Do not forget about schema!
+![](img/schema.svg)
+
 
 
 ## Deployment
