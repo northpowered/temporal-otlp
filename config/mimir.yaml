@@ -1,7 +1,5 @@
-# Do not use this configuration in production.
-# It is for demonstration purposes only.
-# Run Mimir in single process mode, with all components running in 1 process.
-target: all,alertmanager,overrides-exporter
+multitenancy_enabled: true
+
 
 # Configure Mimir to use Minio as object storage backend.
 common:
@@ -12,17 +10,35 @@ common:
       access_key_id: superuser
       secret_access_key: supersecret
       insecure: true
-      bucket_name: mimir
+      
 
-# Blocks storage requires a prefix when using a common object storage bucket.
 blocks_storage:
-  storage_prefix: blocks
+  # storage_prefix: blocks
+  s3:
+    bucket_name: mimir-blocks
   tsdb:
     dir: /data/ingester
 
+  # bucket_store:
+  #   index_cache:
+  #     backend: memcached
+  #     memcached:
+  #       addresses: memcached:11211
+
+  #   chunks_cache:
+  #     backend: memcached
+  #     memcached:
+  #       addresses: memcached:11211
+
+  #   metadata_cache:
+  #     backend: memcached
+  #     memcached:
+  #       addresses: memcached:11211
+
+
 # Use memberlist, a gossip-based protocol, to enable the 3 Mimir replicas to communicate
 memberlist:
-  join_members: [mimir-1, mimir-2, mimir-3]
+  join_members: [ mimir-write-1, mimir-write-2, mimir-write-3 ]
 
 ruler:
   rule_path: /data/ruler
@@ -32,10 +48,41 @@ ruler:
     heartbeat_period: 2s
     heartbeat_timeout: 10s
 
+
+ruler_storage:
+  s3:
+    bucket_name:       mimir-ruler
+  cache:
+    backend: memcached
+    memcached:
+      addresses: dns+memcached:11211
+
+
+query_scheduler:
+  service_discovery_mode: "ring"
+
+
 alertmanager:
   data_dir: /data/alertmanager
   fallback_config_file: /etc/alertmanager-fallback-config.yaml
   external_url: http://localhost:9009/alertmanager
 
+
+alertmanager_storage:
+  s3:
+    bucket_name: mimir-alertmanager
+
+
+overrides_exporter:
+  ring:
+    enabled: true
+    wait_stability_min_duration: 30s
+
+
+limits:
+  native_histograms_ingestion_enabled: true
+
+
 server:
-  log_level: warn
+  log_level: debug
+

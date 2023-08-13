@@ -43,7 +43,9 @@ services:
       - |
         mkdir -p /data/loki-data && \
         mkdir -p /data/loki-ruler && \
-        mkdir -p /data/mimir && \
+        mkdir -p /data/mimir-blocks && \
+        mkdir -p /data/mimir-alertmanager && \
+        mkdir -p /data/mimir-ruler && \
         mkdir -p /data/tempo &&
         minio server /data --console-address :9001
     environment:
