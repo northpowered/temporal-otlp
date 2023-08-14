@@ -1,0 +1,4 @@
+overrides:
+
+  otlp-test:
+    compactor_blocks_retention_period: 1m

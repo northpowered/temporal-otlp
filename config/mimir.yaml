@@ -1,44 +1,51 @@
 multitenancy_enabled: true
 
-
 # Configure Mimir to use Minio as object storage backend.
-common:
-  storage:
-    backend: s3
-    s3:
-      endpoint: minio:9000
-      access_key_id: superuser
-      secret_access_key: supersecret
-      insecure: true
+# common:
+#   storage:
+#     backend: s3
+#     s3:
+#       endpoint: minio:9000
+#       access_key_id: superuser
+#       secret_access_key: supersecret
+#       insecure: true
       
 
 blocks_storage:
-  # storage_prefix: blocks
+  backend: s3
+  storage_prefix: blocks
   s3:
+    endpoint: minio:9000
+    access_key_id: superuser
+    secret_access_key: supersecret
+    insecure: true
     bucket_name: mimir-blocks
   tsdb:
     dir: /data/ingester
+    ship_interval: 60s
+    retention_period: 1h
 
-  # bucket_store:
-  #   index_cache:
-  #     backend: memcached
-  #     memcached:
-  #       addresses: memcached:11211
+  bucket_store:
+    sync_interval: 5m
+    index_cache:
+      backend: memcached
+      memcached:
+        addresses: memcached:11211
 
-  #   chunks_cache:
-  #     backend: memcached
-  #     memcached:
-  #       addresses: memcached:11211
+    chunks_cache:
+      backend: memcached
+      memcached:
+        addresses: memcached:11211
 
-  #   metadata_cache:
-  #     backend: memcached
-  #     memcached:
-  #       addresses: memcached:11211
+    metadata_cache:
+      backend: memcached
+      memcached:
+        addresses: memcached:11211
 
 
 # Use memberlist, a gossip-based protocol, to enable the 3 Mimir replicas to communicate
 memberlist:
-  join_members: [ mimir-write-1, mimir-write-2, mimir-write-3 ]
+  join_members: [mimir-write-1, mimir-write-2, mimir-write-3]
 
 ruler:
   rule_path: /data/ruler
@@ -51,11 +58,15 @@ ruler:
 
 ruler_storage:
   s3:
-    bucket_name:       mimir-ruler
+    endpoint: minio:9000
+    access_key_id: superuser
+    secret_access_key: supersecret
+    insecure: true
+    bucket_name:  mimir-ruler
   cache:
     backend: memcached
     memcached:
-      addresses: dns+memcached:11211
+      addresses: memcached:11211
 
 
 query_scheduler:
@@ -70,6 +81,10 @@ alertmanager:
 
 alertmanager_storage:
   s3:
+    endpoint: minio:9000
+    access_key_id: superuser
+    secret_access_key: supersecret
+    insecure: true
     bucket_name: mimir-alertmanager
 
 
@@ -86,3 +101,5 @@ limits:
 server:
   log_level: debug
 
+runtime_config:
+  file: /etc/runtime.yaml

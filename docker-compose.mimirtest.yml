@@ -21,6 +21,7 @@ x-mimir:
       - com.host.plane=cp
   volumes:
     - ./config/mimir.yaml:/etc/mimir.yaml
+    - ./config/runtime.yaml:/etc/runtime.yaml
     - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
 
 services:
@@ -61,16 +62,31 @@ services:
     <<: *mimir
     command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
     hostname: "mimir-write-1"
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/runtime.yaml:/etc/runtime.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - "./data/.1:/data:delegated"
 
   mimir-write-2:
     <<: *mimir
     command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
     hostname: "mimir-write-2"
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/runtime.yaml:/etc/runtime.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - "./data/.2:/data:delegated"
 
   mimir-write-3:
     <<: *mimir
     command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
     hostname: "mimir-write-3"
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/runtime.yaml:/etc/runtime.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - "./data/.3:/data:delegated"
 
   mimir-read-1:
     <<: *mimir
