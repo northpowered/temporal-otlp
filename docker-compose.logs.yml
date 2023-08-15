@@ -9,11 +9,26 @@ volumes:
   alertmanager-data:
   loki:
 
+x-loki:
+  &loki
+  image: &loki-img grafana/loki:2.8.3
+  labels:
+    - com.host.plane=cp
+  networks:
+    - otlp_network
+  restart: always 
+  ports:
+    - "3100"
+    - "7946"
+  volumes:
+    - ./config/loki.yaml:/etc/loki/loki.yaml
+    - ./config/overrides.yaml:/etc/overrides.yaml
+    - ./rules:/loki/rules:ro
 
 services:
 
   init:
-    image: &lokiImage grafana/loki:2.8.3
+    image: *loki-img
     user: root
     entrypoint:
       - "chown"
@@ -24,41 +39,20 @@ services:
     networks:
       - otlp_network
 
-
   loki-read:
-    image: *lokiImage
-    volumes:
-      - ./config/loki.yaml:/etc/loki/loki.yaml
-      - ./rules:/loki/rules:ro
-    ports:
-      - "3100"
-      - "7946"
-    command: "-config.file=/etc/loki/loki.yaml -target=read"
-    networks:
-      - otlp_network
-    restart: always
+    <<: *loki
+    command: "-config.file=/etc/loki/loki.yaml -runtime-config.file=/etc/overrides.yaml -target=read"
     deploy:
       mode: replicated
       replicas: 3
-    labels:
-      - com.host.plane=cp
+
 
   loki-write:
-    image: *lokiImage
-    volumes:
-      - ./config:/etc/loki/
-    ports:
-      - "3100"
-      - "7946"
+    <<: *loki
     command: "-config.file=/etc/loki/loki.yaml -target=write"
-    networks:
-      - otlp_network
-    restart: always
     deploy:
       mode: replicated
       replicas: 3
-    labels:
-      - com.host.plane=cp
 
   # alertmanager to enable receiving alerts
   alertmanager:

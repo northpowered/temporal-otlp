@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: otlp-test-cp/mimir/read
+    static_configs:
+      - targets: ["mimir-read-1:8080", "mimir-read-2:8080", "mimir-read-3:8080"]
+        labels:
+          pod: "mimir-read"
+      
+  - job_name: otlp-test-cp/mimir/write
+    static_configs:
+      - targets: ["mimir-write-1:8080", "mimir-write-2:8080", "mimir-write-3:8080"]
+        labels:
+          pod: "mimir-write"
+
+  - job_name: otlp-test-cp/mimir/backend
+    static_configs:
+      - targets: ["mimir-backend-1:8080", "mimir-backend-2:8080", "mimir-backend-3:8080"]
+        labels:
+          pod: "mimir-backend"
+  
+  - job_name: 'otlp-test-cp/vmagent-cp'
+    static_configs:
+         - targets: ['localhost:8429']
+
+  - job_name: 'otlp-test-cp/vmagent-dp'
+    static_configs:
+         - targets: ['vmagent-dp:8429']
+
+  - job_name: 'otlp-test-cp/tempo'
+    static_configs:
+         - targets: ['otel-test-tempo:3200']

@@ -1,0 +1,43 @@
+version: "3.7"
+
+networks:
+  otlp_network:
+    name: otlp_network
+    external: true
+
+
+x-vmagent:
+  &vmagent
+  image: victoriametrics/vmagent:v1.93.0
+  networks:
+    - otlp_network
+  labels:
+      - com.host.plane=cp
+  deploy:
+    replicas: 1
+    restart_policy:
+      condition: on-failure
+  volumes:
+    - ./config:/config
+  expose:
+    - 8429
+
+
+services:
+  vmagent-cp:
+    <<: *vmagent
+    container_name: vmagent-cp
+    hostname: vmagent-cp
+    command:
+      - "--promscrape.config=/config/prometheus-cp.yaml"
+      - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
+      - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-cp" # Providing tenant name to headers
+
+  vmagent-dp:
+    <<: *vmagent
+    container_name: vmagent-dp
+    hostname: vmagent-dp
+    command:
+      - "--promscrape.config=/config/prometheus-dp.yaml"
+      - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
+      - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-dp" # Providing tenant name to headers

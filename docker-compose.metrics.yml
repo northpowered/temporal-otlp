@@ -11,74 +11,105 @@ volumes:
   mimir-2-data:
   mimir-3-data:
 
+x-mimir-v-config: &mimir-v-config
+  "./config/mimir.yaml:/etc/mimir.yaml"
+
+
+x-mimir-v-runtime: &mimir-v-runtime
+  "./config/runtime.yaml:/etc/runtime.yaml"
+
+x-mimir-v-am: &mimir-v-am
+  "./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml"
+
+x-mimir-v-prst-tsdb-1: &mimir-v-prst-tsdb-1
+  "./data/.1:/data:delegated"
+
+x-mimir-v-prst-tsdb-2: &mimir-v-prst-tsdb-2
+  "./data/.2:/data:delegated"
+
+x-mimir-v-prst-tsdb-3: &mimir-v-prst-tsdb-3
+  "./data/.3:/data:delegated"
+
+x-mimir:
+  &mimir
+  image: grafana/mimir:latest
+  networks:
+    - otlp_network
+  labels:
+      - com.host.plane=cp
+  volumes:
+    - *mimir-v-config
+    - *mimir-v-runtime
+    - *mimir-v-am
 
 services:
 
-  mimir-1:
-    image: grafana/mimir:latest
-    command: ["-config.file=/etc/mimir.yaml"]
-    hostname: mimir-1
-    # depends_on:
-    #   - minio
-    volumes:
-      - ./config/mimir.yaml:/etc/mimir.yaml
-      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
-      - mimir-1-data:/data
-    networks:
-      - otlp_network
-    labels:
-      - com.host.plane=cp
-
-  mimir-2:
-    image: grafana/mimir:latest
-    command: ["-config.file=/etc/mimir.yaml"]
-    hostname: mimir-2
-    # depends_on:
-    #   - minio
-    volumes:
-      - ./config/mimir.yaml:/etc/mimir.yaml
-      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
-      - mimir-2-data:/data
-    networks:
-      - otlp_network
-    labels:
-      - com.host.plane=cp
-
-  mimir-3:
-    image: grafana/mimir:latest
-    command: ["-config.file=/etc/mimir.yaml"]
-    hostname: mimir-3
-    # depends_on:
-    #   - minio
-    volumes:
-      - ./config/mimir.yaml:/etc/mimir.yaml
-      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
-      - mimir-3-data:/data
+  memcached:
+    image: "memcached:1.6.19-alpine"
+    hostname: memcached
     networks:
       - otlp_network
     labels:
       - com.host.plane=cp
 
 
-  otel-test-prometheus:
-    image: prom/prometheus:latest
-    container_name: otel-test-prometheus
-    hostname: otel-test-prometheus
+  mimir-backend-1:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
+    hostname: "mimir-backend-1"
+
+  mimir-backend-2:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
+    hostname: "mimir-backend-2"
+
+  mimir-backend-3:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
+    hostname: "mimir-backend-3"
+
+
+  mimir-write-1:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
+    hostname: "mimir-write-1"
+    volumes_from:
+      - mimir-backend-1
     volumes:
-      - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-remote-write-receiver'
-    ports:
-      - "127.0.0.1:9090:9090"
-    networks:
-      - otlp_network
-    labels:
-      - com.host.plane=cp
-    # depends_on:
-    #   - "mimir-1"
-    #   - "mimir-2"
-    #   - "mimir-3"
+      - *mimir-v-prst-tsdb-1
+
+  mimir-write-2:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
+    hostname: "mimir-write-2"
+    volumes_from:
+      - mimir-backend-2
+    volumes:
+      - *mimir-v-prst-tsdb-2
+
+  mimir-write-3:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
+    hostname: "mimir-write-3"
+    volumes_from:
+      - mimir-backend-3
+    volumes:
+      - *mimir-v-prst-tsdb-3
+
+  mimir-read-1:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
+    hostname: "mimir-read-1"
+
+  mimir-read-2:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
+    hostname: "mimir-read-2"
+
+  mimir-read-3:
+    <<: *mimir
+    command: ["-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
+    hostname: "mimir-read-3"
+
+
+

@@ -6,7 +6,7 @@ server:
 
 clients:
   - url: http://load-balancer:3100/loki/api/v1/push
-    tenant_id: docker
+    tenant_id: otlp-test
 
 
 scrape_configs:

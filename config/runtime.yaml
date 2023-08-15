@@ -1,4 +1,7 @@
 overrides:
 
-  otlp-test:
+  otlp-test-cp:
     compactor_blocks_retention_period: 1m
+
+  otlp-test-dp:
+    compactor_blocks_retention_period: 1y

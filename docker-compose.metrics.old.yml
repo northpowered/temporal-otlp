@@ -1,0 +1,84 @@
+version: "3.7"
+
+networks:
+  otlp_network:
+    name: otlp_network
+    external: true
+
+
+volumes:
+  mimir-1-data:
+  mimir-2-data:
+  mimir-3-data:
+
+
+services:
+
+  mimir-1:
+    image: grafana/mimir:latest
+    command: ["-config.file=/etc/mimir.yaml"]
+    hostname: mimir-1
+    # depends_on:
+    #   - minio
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - mimir-1-data:/data
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  mimir-2:
+    image: grafana/mimir:latest
+    command: ["-config.file=/etc/mimir.yaml"]
+    hostname: mimir-2
+    # depends_on:
+    #   - minio
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - mimir-2-data:/data
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  mimir-3:
+    image: grafana/mimir:latest
+    command: ["-config.file=/etc/mimir.yaml"]
+    hostname: mimir-3
+    # depends_on:
+    #   - minio
+    volumes:
+      - ./config/mimir.yaml:/etc/mimir.yaml
+      - ./config/alertmanager.yaml:/etc/alertmanager-fallback-config.yaml
+      - mimir-3-data:/data
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+
+  otel-test-prometheus:
+    image: prom/prometheus:latest
+    container_name: otel-test-prometheus
+    hostname: otel-test-prometheus
+    volumes:
+      - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-remote-write-receiver'
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+    # depends_on:
+    #   - "mimir-1"
+    #   - "mimir-2"
+    #   - "mimir-3"
