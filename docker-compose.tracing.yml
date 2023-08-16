@@ -5,25 +5,112 @@ networks:
     name: otlp_network
     external: true
 
+x-tempo:
+  &tempo
+  image: grafana/tempo:latest
+  restart: always
+  volumes:
+    - ./config/tempo.yaml:/etc/tempo.yaml
+  ports:
+    - "14268"  # jaeger ingest
+    - "3200"   # tempo
+    - "9095" # tempo grpc
+    - "4317"  # otlp grpc
+    - "4318"  # otlp http
+    - "9411"   # zipkin
+    - "7946" # memberlist
+  networks:
+    - otlp_network
+  labels:
+    - com.host.plane=cp
+
 services:
 
-  otel-test-tempo:
-    image: grafana/tempo:latest
-    container_name: otel-test-tempo
-    hostname: otel-test-tempo
-    command: ["-config.file=/etc/tempo.yaml" ]
-    volumes:
-      - ./config/tempo.yaml:/etc/tempo.yaml
-    ports:
-      - "127.0.0.1:14268:14268"  # jaeger ingest
-      - "127.0.0.1:3200:3200"   # tempo
-      - "127.0.0.1:9095:9095" # tempo grpc
-      - "127.0.0.1:4317:4317"  # otlp grpc
-      - "127.0.0.1:4318:4318"  # otlp http
-      - "127.0.0.1:9411:9411"   # zipkin
-    networks:
-      - otlp_network
-    labels:
-      - com.host.plane=cp
+  tempo-distributor-1:
+    <<: *tempo
+    command: "-target=distributor -config.file=/etc/tempo.yaml"
+    container_name: tempo-distributor-1
+    hostname: tempo-distributor-1
+
+  tempo-ingester-1:
+    <<: *tempo
+    command: "-target=ingester -config.file=/etc/tempo.yaml"
+    container_name: tempo-ingester-1
+    hostname: tempo-ingester-1
+
+  tempo-ingester-2:
+    <<: *tempo
+    command: "-target=ingester -config.file=/etc/tempo.yaml"
+    container_name: tempo-ingester-2
+    hostname: tempo-ingester-2
+
+  tempo-ingester-3:
+    <<: *tempo
+    command: "-target=ingester -config.file=/etc/tempo.yaml"
+    container_name: tempo-ingester-3
+    hostname: tempo-ingester-3
+
+  tempo-query-frontend-1:
+    <<: *tempo
+    command: "-target=query-frontend -config.file=/etc/tempo.yaml -log.level=debug"
+    container_name: tempo-query-frontend-1
+    hostname: tempo-query-frontend-1
+
+  tempo-querier-1:
+    <<: *tempo
+    command: "-target=querier -config.file=/etc/tempo.yaml -log.level=debug"
+    container_name: tempo-querier-1
+    hostname: tempo-querier-1
+
+  tempo-compactor-1:
+    <<: *tempo
+    command: "-target=compactor -config.file=/etc/tempo.yaml"
+    container_name: tempo-compactor-1
+    hostname: tempo-compactor-1
+
+  tempo-metrics-generator-1:
+    <<: *tempo
+    command: "-target=metrics-generator -config.file=/etc/tempo.yaml"
+    container_name: tempo-metrics-generator-1
+    hostname: tempo-metrics-generator-1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  # otel-test-tempo:
+  #   image: grafana/tempo:latest
+  #   container_name: otel-test-tempo
+  #   hostname: otel-test-tempo
+  #   command: ["-config.file=/etc/tempo.yaml" ]
+  #   volumes:
+  #     - ./config/tempo.yaml:/etc/tempo.yaml
+  #   ports:
+  #     - "127.0.0.1:14268:14268"  # jaeger ingest
+  #     - "127.0.0.1:3200:3200"   # tempo
+  #     - "127.0.0.1:9095:9095" # tempo grpc
+  #     - "127.0.0.1:4317:4317"  # otlp grpc
+  #     - "127.0.0.1:4318:4318"  # otlp http
+  #     - "127.0.0.1:9411:9411"   # zipkin
+  #   networks:
+  #     - otlp_network
+  #   labels:
+  #     - com.host.plane=cp
 
   

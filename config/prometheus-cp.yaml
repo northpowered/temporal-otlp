@@ -6,28 +6,64 @@ scrape_configs:
     static_configs:
       - targets: ["mimir-read-1:8080", "mimir-read-2:8080", "mimir-read-3:8080"]
         labels:
-          pod: "mimir-read"
+          svc: "mimir-read"
       
   - job_name: otlp-test-cp/mimir/write
     static_configs:
       - targets: ["mimir-write-1:8080", "mimir-write-2:8080", "mimir-write-3:8080"]
         labels:
-          pod: "mimir-write"
+          svc: "mimir-write"
 
   - job_name: otlp-test-cp/mimir/backend
     static_configs:
       - targets: ["mimir-backend-1:8080", "mimir-backend-2:8080", "mimir-backend-3:8080"]
         labels:
-          pod: "mimir-backend"
+          svc: "mimir-backend"
   
   - job_name: 'otlp-test-cp/vmagent-cp'
     static_configs:
-         - targets: ['localhost:8429']
+        - targets: ['localhost:8429']
+          labels:
+            svc: "vmagent-cp"
 
   - job_name: 'otlp-test-cp/vmagent-dp'
     static_configs:
-         - targets: ['vmagent-dp:8429']
+        - targets: ['vmagent-dp:8429']
+          labels:
+            svc: "vmagent-dp"
 
-  - job_name: 'otlp-test-cp/tempo'
+  - job_name: 'otlp-test-cp/tempo/compactor'
     static_configs:
-         - targets: ['otel-test-tempo:3200']
+        - targets: ['tempo-compactor-1:3200']
+          labels:
+            svc: "tempo-compactor"
+
+  - job_name: 'otlp-test-cp/tempo/metrics-generator'
+    static_configs:
+        - targets: ['tempo-metrics-generator-1:3200']
+          labels:
+            svc: "tempo-metrics-generator"
+
+  - job_name: 'otlp-test-cp/tempo/distributor'
+    static_configs:
+        - targets: ['tempo-distributor-1:3200']
+          labels:
+            svc: "tempo-distributor"
+
+  - job_name: 'otlp-test-cp/tempo/tempo-ingester'
+    static_configs:
+        - targets: ['tempo-ingester-1:3200','tempo-ingester-2:3200','tempo-ingester-3:3200']
+          labels:
+            svc: "tempo-ingester"
+
+  - job_name: 'otlp-test-cp/tempo/query-frontend'
+    static_configs:
+        - targets: ['tempo-query-frontend-1:3200']
+          labels:
+            svc: "tempo-query-frontend"
+    
+  - job_name: 'otlp-test-cp/tempo/querier'
+    static_configs:
+        - targets: ['tempo-querier-1:3200']
+          labels:
+            svc: "tempo-querier"

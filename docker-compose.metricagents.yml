@@ -23,6 +23,18 @@ x-vmagent:
     - 8429
 
 
+x-otel-collector:
+  &otel-collector
+  image: otel/opentelemetry-collector:0.61.0
+  command: ["--config=/etc/otel-collector.yaml"]
+  volumes:
+    - ./config/otelcollector.yaml:/etc/otel-collector.yaml
+  networks:
+    - otlp_network
+  labels:
+      - com.host.plane=cp
+
+
 services:
   vmagent-cp:
     <<: *vmagent
@@ -41,3 +53,36 @@ services:
       - "--promscrape.config=/config/prometheus-dp.yaml"
       - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
       - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-dp" # Providing tenant name to headers
+  
+
+  promtail-cp:
+    image: grafana/promtail:latest        
+    container_name: promtail-cp
+    hostname: promtail-cp
+    volumes:
+      - ./config/promtail-cp.yaml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+  promtail-dp:
+    image: grafana/promtail:latest        
+    container_name: promtail-dp
+    hostname: promtail-dp
+    volumes:
+      - ./config/promtail-dp.yaml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
+
+
+  otel-collector-dp:
+    <<: *otel-collector
+    container_name: otel-collector-dp
+    hostname: otel-collector-dp

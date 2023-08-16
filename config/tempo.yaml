@@ -1,6 +1,8 @@
 server:
   http_listen_port: 3200
 
+multitenancy_enabled: true
+
 distributor:
   receivers:                           # this configuration will listen on all ports and protocols that tempo is capable of.
     jaeger:                            # the receives all come from the OpenTelemetry collector.  more configuration information can
@@ -16,12 +18,28 @@ distributor:
         grpc:
     opencensus:
 
+
+memberlist:
+  abort_if_cluster_join_fails: false
+  bind_port: 7946
+  join_members:
+  - tempo-ingester-1:7946
+  - tempo-ingester-2:7946
+  - tempo-ingester-3:7946
+
+
 ingester:
   max_block_duration: 5m               # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally
 
 compactor:
   compaction:
     block_retention: 1h                # overall Tempo trace retention. set for demo purposes
+
+
+querier:
+  frontend_worker:
+    frontend_address: tempo-query-frontend-1:9095
+
 
 metrics_generator:
 
@@ -37,7 +55,7 @@ metrics_generator:
   registry:
     external_labels:
       source: tempo
-      cluster: docker-compose
+      cluster: otlp-test-dp
   storage:
     path: /tmp/tempo/generator/wal
     remote_write:
@@ -48,18 +66,17 @@ metrics_generator:
 
 storage:
   trace:
-    backend: s3                        # backend configuration to use
-    wal:
-      path: /tmp/tempo/wal             # where to store the the wal locally
+    backend: s3                        # backend configuration to use             # where to store the the wal locally
     s3:
       bucket: tempo                    # how to store data in s3
       endpoint: minio:9000
       access_key: superuser
       secret_key: supersecret
       insecure: true
-      # For using AWS, select the appropriate regional endpoint and region
-      # endpoint: s3.dualstack.us-west-2.amazonaws.com
-      # region: us-west-2
+    wal:
+      path: /tmp/tempo/wal             # where to store the the wal locally
+    local:
+      path: /tmp/tempo/blocks
 
 overrides:
   metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator

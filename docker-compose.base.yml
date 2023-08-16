@@ -7,6 +7,7 @@ networks:
 
 volumes:
   minio-data:
+  alertmanager-data:
 
 
 services:
@@ -17,7 +18,7 @@ services:
     container_name: otel-test-grafana
     hostname: otel-test-grafana
     volumes:
-      - ./grafana_data:/var/lib/grafana
+      - ./grafana_data:/var/lib/grafana:rw
     environment:
       # - GF_AUTH_ANONYMOUS_ENABLED=true
       # - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
@@ -78,3 +79,18 @@ services:
         - otlp_network
       labels:
         - com.host.plane=cp
+
+
+  # alertmanager to enable receiving alerts
+  alertmanager:
+    image: prom/alertmanager:v0.23.0
+    restart: always
+    hostname: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - "./config/alertmanager.yaml:/config/alertmanager.yaml"
+      - alertmanager-data:/data
+    command: --config.file=/config/alertmanager.yaml --log.level=debug
+    networks:
+      - otlp_network

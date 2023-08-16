@@ -62,7 +62,7 @@ ruler:
     enabled: true
     clients:
       local:
-         url: http://prometheus:9090/api/v1/write
+         url: http://load-balancer:9009/api/v1/push
          queue_config:
            # send immediately as soon as a sample is generated
            capacity: 1

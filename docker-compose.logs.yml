@@ -6,7 +6,6 @@ networks:
     external: true
 
 volumes:
-  alertmanager-data:
   loki:
 
 x-loki:
@@ -54,29 +53,4 @@ services:
       mode: replicated
       replicas: 3
 
-  # alertmanager to enable receiving alerts
-  alertmanager:
-    image: prom/alertmanager:v0.23.0
-    restart: always
-    hostname: alertmanager
-    ports:
-      - "9093:9093"
-    volumes:
-      - "./config/alertmanager.yaml:/config/alertmanager.yaml"
-      - alertmanager-data:/data
-    command: --config.file=/config/alertmanager.yaml --log.level=debug
-    networks:
-      - otlp_network
 
-  otel-test-promtail:
-    image: grafana/promtail:latest
-    container_name: otel-test-promtail
-    hostname: otel-test-promtail
-    volumes:
-      - ./config/promtail.yaml:/etc/promtail/config.yml
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/containers:/var/lib/docker/containers
-    networks:
-      - otlp_network
-    labels:
-      - com.host.plane=cp
