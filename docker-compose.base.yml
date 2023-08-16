@@ -66,6 +66,7 @@ services:
       - com.host.plane=cp
 
 
+
   load-balancer:
       image: nginx:latest
       hostname: load-balancer
@@ -79,7 +80,7 @@ services:
         - otlp_network
       labels:
         - com.host.plane=cp
-
+        - com.host.apm-svc.type=nginx
 
   # alertmanager to enable receiving alerts
   alertmanager:
