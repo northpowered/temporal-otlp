@@ -29,9 +29,11 @@ scrape_configs:
             x_service_name: "record.extra.service_letter"
             x_request_id: "record.extra.x_request_id"
             scope: "record.extra.scope"
+      - labels:
+          scope: scope
       - template:
           source: scope
-          template: "{{ if not .scope }}tech{{ end }}"
+          template: "{{ if eq .scope nil }}tech{{ else }}{{ .scope }}{{ end }}"
             #otlp-test-dp-tech - default DP subtenant
       - template:
           source: scope
