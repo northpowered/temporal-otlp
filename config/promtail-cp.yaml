@@ -1,7 +1,7 @@
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
-  log_level: "info"
+  log_level: "debug"
 
 clients:
   - url: http://load-balancer:3100/loki/api/v1/push
@@ -30,38 +30,49 @@ scrape_configs:
             request_length: request_length
             output: uri
             method: method
+            status: status
             level: status
             upstream_addr: upstream_addr
             user_agent: user_agent
             tenant: tenant
-            time: time
+
+      - template:
+          source: output
+          template: '{{ .method }} {{ .status }} {{ .Value  }}'
+      # How to create LEVEL label if you`re a lobster
+      - template:
+          source: level
+          template: "\
+            {{ if and (ge (int .status) 400) (lt (int .status) 500) }}\
+              WARN\
+            {{ else }}\
+              {{ if (ge (int .status) 500) }}\
+                ERROR\
+              {{ else }}\
+                INFO\
+              {{ end }}\
+            {{ end }}\
+            "
       - labels:
-          level:
           user_agent:
           tenant:
-      - timestamp:
-          format: RFC3339
-          source: time
+          status:
+          level:
       - output:
-          # source: source
-          # host: host
-          # request_length: request_length
           source: output
-          # level: status
-          # user_agent: user_agent
-          # tenant: tenant
 
-  # - job_name: apm-services-all
-  #   # use docker.sock to filter containers
-  #   docker_sd_configs:
-  #     - host: "unix:///var/run/docker.sock"
-  #       refresh_interval: 15s
-  #       filters:
-  #         - name: label
-  #           values: ["com.host.plane=cp"]
-  #   # use container name to create a loki label
-  #   relabel_configs:
-  #     - source_labels: ['__meta_docker_container_name']
-  #       regex: '/(.*)'
-  #       target_label: 'container'
+  - job_name: apm-services-all
+    # use docker.sock to filter containers
+    docker_sd_configs:
+      - host: "unix:///var/run/docker.sock"
+        refresh_interval: 15s
+        # TODO: exclude nginx job from this filter
+        filters:
+          - name: label
+            values: ["com.host.plane=cp"]
+    # use container name to create a loki label
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
 

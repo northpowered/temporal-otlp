@@ -63,6 +63,7 @@ services:
       - ./config/promtail-cp.yaml:/etc/promtail/config.yml
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/var/lib/docker/containers
+      - ./config/test.log:/test.log
     networks:
       - otlp_network
     labels:

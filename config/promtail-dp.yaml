@@ -1,7 +1,7 @@
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
-  log_level: "info"
+  log_level: "debug"
 
 clients:
   - url: http://load-balancer:3100/loki/api/v1/push
@@ -28,10 +28,21 @@ scrape_configs:
             level: "record.level.name"
             x_service_name: "record.extra.service_letter"
             x_request_id: "record.extra.x_request_id"
+            scope: "record.extra.scope"
+      - template:
+          source: scope
+          template: "{{ if not .scope }}tech{{ end }}"
+            #otlp-test-dp-tech - default DP subtenant
+      - template:
+          source: scope
+          template: 'otlp-test-dp-{{ .scope }}'
       - labels:
           level: level
           x_service_name: x_service_name
           x_request_id: x_request_id
+          scope: scope
+      - tenant:
+          label: scope
       - timestamp:
           format: RFC3339
           source: timestamp

@@ -31,6 +31,19 @@ async def service_a_activity_01(x_request_id: str) -> str:
             x_request_id=x_request_id,
             service_letter=SERVICE_LETTER,
         )
+
+        logger.warning(
+            f"Execute warn log {activity.info().activity_type}",
+            x_request_id=x_request_id,
+            service_letter=SERVICE_LETTER,
+        )
+
+        logger.info(
+            f"Persistence log example for {activity.info().activity_type}",
+            x_request_id=x_request_id,
+            service_letter=SERVICE_LETTER,
+            scope="persist"
+        )
         return x_request_id
 
 
