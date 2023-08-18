@@ -35,7 +35,8 @@ ingester:
 
 compactor:
   compaction:
-    block_retention: 1h                # overall Tempo trace retention. set for demo purposes
+    # Store traces for 1 month
+    block_retention: 1m
 
 
 querier:
