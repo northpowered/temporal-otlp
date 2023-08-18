@@ -6,7 +6,7 @@ from temporalio.worker import Worker
 import asyncio
 from datetime import timedelta
 from tracer import tracer, trace
-from env import SERVICE_LETTER, PROMETHEUS_PORT, TEMPORAL_ENDPOINT
+from env import SERVICE_LETTER, PROMETHEUS_PORT, TEMPORAL_ENDPOINT, APP_MODE
 from logger import setup_logging
 from loguru import logger
 
@@ -61,7 +61,8 @@ async def run_service():
     client = await Client.connect(
         target_host=TEMPORAL_ENDPOINT,
         interceptors=[TracingInterceptor(tracer=tracer)],
-        runtime=runtime
+        runtime=runtime,
+        namespace=APP_MODE
     )
     worker = Worker(
         client=client,

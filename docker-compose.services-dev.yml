@@ -4,11 +4,12 @@
 x-service-template:
   &service
   env_file:
-    - .env
+    - .env_dev
   networks:
     - otlp_network
   labels:
       - com.host.plane=dp
+      - x.mode=dev
   #pid: "host"
 
 
@@ -22,7 +23,7 @@ services:
       context: .
       args:
         - SRV_LETTER=A
-    hostname: otel-test-service-a
+    hostname: otel-test-service-a-dev
 
   b:
     <<: *service
@@ -30,14 +31,14 @@ services:
       context: .
       args:
         - SRV_LETTER=B
-    hostname: otel-test-service-b
+    hostname: otel-test-service-b-dev
   c:
     <<: *service
     build:
       context: .
       args:
         - SRV_LETTER=C
-    hostname: otel-test-service-c
+    hostname: otel-test-service-c-dev
 
   d:
     <<: *service
@@ -45,7 +46,7 @@ services:
       context: .
       args:
         - SRV_LETTER=D
-    hostname: otel-test-service-d
+    hostname: otel-test-service-d-dev
 
   e:
     <<: *service
@@ -53,7 +54,7 @@ services:
       context: .
       args:
         - SRV_LETTER=E
-    hostname: otel-test-service-e
+    hostname: otel-test-service-e-dev
 
   f:
     <<: *service
@@ -61,7 +62,7 @@ services:
       context: .
       args:
         - SRV_LETTER=F
-    hostname: otel-test-service-f
+    hostname: otel-test-service-f-dev
 # Networking
 
 networks:

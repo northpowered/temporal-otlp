@@ -1,3 +1,5 @@
+# Promtail for DEV svc namespace
+
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
@@ -5,7 +7,7 @@ server:
 
 clients:
   - url: http://load-balancer:3100/loki/api/v1/push
-    tenant_id: otlp-test-dp
+    tenant_id: otlp-test-dp-dev
 
 scrape_configs:
   - job_name: svcs
@@ -16,6 +18,8 @@ scrape_configs:
         filters:
           - name: label
             values: ["com.host.plane=dp"]
+          - name: label
+            values: ["x.mode=dev"]
     relabel_configs:
       - source_labels: ["__meta_docker_container_name"]
         regex: "/(.*)"
@@ -34,10 +38,11 @@ scrape_configs:
       - template:
           source: scope
           template: "{{ if eq .scope nil }}tech{{ else }}{{ .scope }}{{ end }}"
-            #otlp-test-dp-tech - default DP subtenant
+            #otlp-test-dp-dev-tech - default DP subtenant
+            # or provide otlp-test-dp-dev-persist
       - template:
           source: scope
-          template: 'otlp-test-dp-{{ .scope }}'
+          template: 'otlp-test-dp-dev-{{ .scope }}'
       - labels:
           level: level
           x_service_name: x_service_name

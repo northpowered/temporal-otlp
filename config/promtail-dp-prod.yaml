@@ -1,0 +1,57 @@
+# Promtail for PROD svc namespace
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: "debug"
+
+clients:
+  - url: http://load-balancer:3100/loki/api/v1/push
+    tenant_id: otlp-test-dp-prod
+
+scrape_configs:
+  - job_name: svcs
+    # use docker.sock to filter containers
+    docker_sd_configs:
+      - host: "unix:///var/run/docker.sock"
+        refresh_interval: 15s
+        filters:
+          - name: label
+            values: ["com.host.plane=dp"]
+          - name: label
+            values: ["x.mode=prod"]
+    relabel_configs:
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: "container"
+    pipeline_stages:
+      - json:
+          expressions:
+            output: text
+            timestamp: "record.time.repr"
+            level: "record.level.name"
+            x_service_name: "record.extra.service_letter"
+            x_request_id: "record.extra.x_request_id"
+            scope: "record.extra.scope"
+      - labels:
+          scope: scope
+      - template:
+          source: scope
+          template: "{{ if eq .scope nil }}tech{{ else }}{{ .scope }}{{ end }}"
+            #otlp-test-dp-prod-tech - default DP subtenant
+            # otlp-test-dp-prod-persist
+      - template:
+          source: scope
+          template: 'otlp-test-dp-prod-{{ .scope }}'
+      - labels:
+          level: level
+          x_service_name: x_service_name
+          x_request_id: x_request_id
+          scope: scope
+      - tenant:
+          label: scope
+      - timestamp:
+          format: RFC3339
+          source: timestamp
+      - output:
+          source: output

@@ -1,10 +1,16 @@
 # Loki log retention
 
 overrides:
-    "otlp-test-dp-tech":
+    "otlp-test-dp-dev-tech":
+        retention_period: 1m
+
+    "otlp-test-dp-dev-persist":
+        retention_period: 3m
+
+    "otlp-test-dp-prod-tech":
         retention_period: 1y
 
-    "otlp-test-dp-persist":
+    "otlp-test-dp-prod-persist":
         retention_period: 3y
 
     "otlp-test-cp":

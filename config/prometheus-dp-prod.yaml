@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  
+  - job_name: 'prod-service-a'
+    static_configs:
+         - targets: ['otel-test-service-a-prod:9090']
+
+  - job_name: 'prod-service-b'
+    static_configs:
+         - targets: ['otel-test-service-b-prod:9090']
+
+  - job_name: 'prod-service-c'
+    static_configs:
+         - targets: ['otel-test-service-c-prod:9090']
+
+  - job_name: 'prod-service-d'
+    static_configs:
+          - targets: ['otel-test-service-d-prod:9090']
+
+  - job_name: 'prod-service-e'
+    static_configs:
+          - targets: ['otel-test-service-e-prod:9090']
+
+  - job_name: 'prod-service-f'
+    static_configs:
+          - targets: ['otel-test-service-f-prod:9090']

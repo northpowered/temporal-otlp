@@ -1,0 +1,16 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+exporters:
+  otlp:
+    endpoint: tempo-distributor-1:4317
+    tls:
+      insecure: true
+    headers:
+      x-scope-orgid: otlp-test-dp-prod
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp]

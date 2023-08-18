@@ -27,8 +27,6 @@ x-otel-collector:
   &otel-collector
   image: otel/opentelemetry-collector:0.61.0
   command: ["--config=/etc/otel-collector.yaml"]
-  volumes:
-    - ./config/otelcollector.yaml:/etc/otel-collector.yaml
   networks:
     - otlp_network
   labels:
@@ -45,15 +43,24 @@ services:
       - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
       - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-cp" # Providing tenant name to headers
 
-  vmagent-dp:
+  vmagent-dp-dev:
     <<: *vmagent
-    container_name: vmagent-dp
-    hostname: vmagent-dp
+    container_name: vmagent-dp-dev
+    hostname: vmagent-dp-dev
     command:
-      - "--promscrape.config=/config/prometheus-dp.yaml"
+      - "--promscrape.config=/config/prometheus-dp-dev.yaml"
       - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
-      - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-dp" # Providing tenant name to headers
+      - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-dp-dev" # Providing tenant name to headers
   
+  vmagent-dp-prod:
+    <<: *vmagent
+    container_name: vmagent-dp-prod
+    hostname: vmagent-dp-prod
+    command:
+      - "--promscrape.config=/config/prometheus-dp-prod.yaml"
+      - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
+      - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-dp-prod" # Providing tenant name to headers
+
 
   promtail-cp:
     image: grafana/promtail:latest        
@@ -69,12 +76,12 @@ services:
     labels:
       - com.host.plane=cp
 
-  promtail-dp:
+  promtail-dp-dev:
     image: grafana/promtail:latest        
-    container_name: promtail-dp
-    hostname: promtail-dp
+    container_name: promtail-dp-dev
+    hostname: promtail-dp-dev
     volumes:
-      - ./config/promtail-dp.yaml:/etc/promtail/config.yml
+      - ./config/promtail-dp-dev.yaml:/etc/promtail/config.yml
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/var/lib/docker/containers
     networks:
@@ -82,8 +89,29 @@ services:
     labels:
       - com.host.plane=cp
 
+  promtail-dp-prod:
+    image: grafana/promtail:latest        
+    container_name: promtail-dp-prod
+    hostname: promtail-dp-prod
+    volumes:
+      - ./config/promtail-dp-prod.yaml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    networks:
+      - otlp_network
+    labels:
+      - com.host.plane=cp
 
-  otel-collector-dp:
+  otel-collector-dp-dev:
     <<: *otel-collector
-    container_name: otel-collector-dp
-    hostname: otel-collector-dp
+    container_name: otel-collector-dp-dev
+    hostname: otel-collector-dp-dev
+    volumes:
+      - ./config/otelcollector-dev.yaml:/etc/otel-collector.yaml
+
+  otel-collector-dp-prod:
+    <<: *otel-collector
+    container_name: otel-collector-dp-prod
+    hostname: otel-collector-dp-prod
+    volumes:
+      - ./config/otelcollector-prod.yaml:/etc/otel-collector.yaml

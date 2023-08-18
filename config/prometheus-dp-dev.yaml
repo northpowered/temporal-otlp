@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  
+  - job_name: 'dev-service-a'
+    static_configs:
+         - targets: ['otel-test-service-a-dev:9090']
+
+  - job_name: 'dev-service-b'
+    static_configs:
+         - targets: ['otel-test-service-b-dev:9090']
+
+  - job_name: 'dev-service-c'
+    static_configs:
+         - targets: ['otel-test-service-c-dev:9090']
+
+  - job_name: 'dev-service-d'
+    static_configs:
+          - targets: ['otel-test-service-d-dev:9090']
+
+  - job_name: 'dev-service-e'
+    static_configs:
+          - targets: ['otel-test-service-e-dev:9090']
+
+  - job_name: 'dev-service-f'
+    static_configs:
+          - targets: ['otel-test-service-f-dev:9090']

@@ -7,7 +7,7 @@ async def run_service():
 
     client = await Client.connect(
         target_host="localhost:7233",
-        namespace="dev"
+        namespace="prod"
     )
 
     result = await client.execute_workflow(

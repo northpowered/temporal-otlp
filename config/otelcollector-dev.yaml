@@ -8,7 +8,7 @@ exporters:
     tls:
       insecure: true
     headers:
-      x-scope-orgid: otlp-test-dp
+      x-scope-orgid: otlp-test-dp-dev
 service:
   pipelines:
     traces:

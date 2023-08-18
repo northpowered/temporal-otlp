@@ -1,0 +1,77 @@
+# export DOCKER_BUILDKIT=1 
+# export COMPOSE_DOCKER_CLI_BUILD=1
+
+x-service-template:
+  &service
+  env_file:
+    - .env_prod
+  networks:
+    - otlp_network
+  labels:
+      - com.host.plane=dp
+      - x.mode=prod
+  #pid: "host"
+
+
+services:
+
+# Workers
+
+  a-prod:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=A
+    hostname: otel-test-service-a-prod
+    container_name: otel-test-service-a-prod
+
+  b-prod:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=B
+    hostname: otel-test-service-b-prod
+    container_name: otel-test-service-b-prod
+  c-prod:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=C
+    hostname: otel-test-service-c-prod
+    container_name: otel-test-service-c-prod
+
+  d-prod:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=D
+    hostname: otel-test-service-d-prod
+    container_name: otel-test-service-d-prod
+
+  e-prod:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=E
+    hostname: otel-test-service-e-prod
+    container_name: otel-test-service-e-prod
+
+  f-prod:
+    <<: *service
+    build:
+      context: .
+      args:
+        - SRV_LETTER=F
+    hostname: otel-test-service-f-prod
+    container_name: otel-test-service-f-prod
+# Networking
+
+networks:
+  otlp_network:
+    name: otlp_network
+    external: true
