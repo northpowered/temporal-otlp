@@ -6,7 +6,7 @@ server:
   http_listen_port: 3100
   grpc_listen_port: 9095
   log_level: info
-  log_format: json
+  log_format: ${LOG_FORMAT}
 
 common:
   path_prefix: /loki

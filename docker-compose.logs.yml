@@ -16,6 +16,9 @@ x-loki:
   networks:
     - otlp_network
   restart: always 
+  environment:
+    # expand-env example
+    - LOG_FORMAT=json
   ports:
     - "3100"
     - "7946"
@@ -40,7 +43,7 @@ services:
 
   loki-read:
     <<: *loki
-    command: "-config.file=/etc/loki/loki.yaml -runtime-config.file=/etc/overrides.yaml -target=read"
+    command: "-config.file=/etc/loki/loki.yaml -runtime-config.file=/etc/overrides.yaml -target=read -config.expand-env=true"
     deploy:
       mode: replicated
       replicas: 3
@@ -48,7 +51,7 @@ services:
 
   loki-write:
     <<: *loki
-    command: "-config.file=/etc/loki/loki.yaml -target=write"
+    command: "-config.file=/etc/loki/loki.yaml -target=write -config.expand-env=true"
     deploy:
       mode: replicated
       replicas: 3
