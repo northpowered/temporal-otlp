@@ -79,7 +79,7 @@ services:
     depends_on:
       - otel-test-temporal
     environment:
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=otel-test-temporal:7233
     image: temporalio/admin-tools:${TEMPORAL_VERSION}
     networks:
       - otlp_network
