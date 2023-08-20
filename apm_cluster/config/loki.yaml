@@ -1,0 +1,128 @@
+auth_enabled: ${LOKI_AUTH_ENABLED}
+
+server:
+  http_listen_address: ${LOKI_HTTP_BIND}
+  grpc_listen_address: ${LOKI_GRPC_BIND}
+  http_listen_port: ${LOKI_HTTP_PORT}
+  grpc_listen_port: ${LOKI_GRPC_PORT}
+  log_level: ${LOKI_LOG_LEVEL}
+  log_format: ${LOKI_LOG_FORMAT}
+
+common:
+  path_prefix: /${LOKI_S3_PATH_PREFIX}
+  storage:
+    s3:
+      endpoint: ${S3_ENDPOINT}
+      insecure: ${S3_INSECURE}
+      bucketnames: ${LOKI_S3_BUCKET_NAME}
+      access_key_id: ${S3_ACCESS_KEY_ID}
+      secret_access_key: ${S3_SECRET_ACCESS_KEY}
+      s3forcepathstyle: true
+  compactor_address: ${LOKI_COMPACTOR_ADDRESS}
+  replication_factor: ${LOKI_S3_REPLICATION_FACTOR}
+
+memberlist:
+  join_members: ["${LOKI_READ_BASE_HOSTNAME}", "${LOKI_WRITE_BASE_HOSTNAME}"]
+  dead_node_reclaim_time: ${LOKI_MEMBERS_DEAD_NODE_RECLAIM_TIME}
+  gossip_to_dead_nodes_time: ${LOKI_MEMBERS_GOSSIP_TO_DEAD_NODES_TIME}
+  left_ingesters_timeout: ${LOKI_MEMBERS_LEFT_INGESTERS_TIMEOUT}
+  bind_addr: ['${LOKI_MEMBERS_BIND}']
+  bind_port: ${LOKI_MEMBERS_PORT}
+  gossip_interval: ${LOKI_MEMBERS_GOSSIP_INTERVAL}
+
+ingester:
+  lifecycler:
+    join_after: ${LOKI_INGESTER_JOIN_AFTER}
+    observe_period: ${LOKI_INGESTER_OBSERVE_PERIOD}
+    ring:
+      replication_factor: ${LOKI_INGESTER_RING_REPLICATION_FACTOR}
+      kvstore:
+        store: memberlist
+    final_sleep: ${LOKI_INGESTER_FINAL_SLEEP}
+  chunk_idle_period: ${LOKI_INGESTER_CHUNK_IDLE_PERIOD}
+  wal:
+    enabled: true
+    dir: /loki/wal
+  max_chunk_age: ${LOKI_INGESTER_MAX_CHUNK_AGE}
+  chunk_retain_period: ${LOKI_INGESTER_CHUNK_RETAIN_PERIOD}
+  chunk_encoding: ${LOKI_INGESTER_CHUNK_ENCODING}
+  chunk_target_size: ${LOKI_INGESTER_CHUNK_TARGET_SIZE}
+  chunk_block_size: ${LOKI_INGESTER_CHUNK_BLOCK_SIZE}
+  flush_op_timeout: ${LOKI_INGESTER_FLUSH_OP_TIMEOUT}
+
+ruler:
+  enable_api: true
+  wal:
+    dir: /loki/ruler-wal
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /loki/prom-rules
+  remote_write:
+    enabled: true
+    clients:
+      local:
+         url: ${LOKI_RULER_REMOTE_WRITE}
+         queue_config:
+           # send immediately as soon as a sample is generated
+           capacity: ${LOKI_RULER_QUEUE_CONFIG_CAPACITY}
+           batch_send_deadline: ${LOKI_RULER_QUEUE_CONFIG_BATCH_SEND_DEADLINE}
+
+schema_config:
+  configs:
+  - from: 2020-08-01
+    store: boltdb-shipper
+    object_store: s3
+    schema: v11
+    index:
+      prefix: index_
+      period: 24h
+  - from: 2023-07-11
+    store: tsdb
+    object_store: s3
+    schema: v12
+    index:
+      prefix: index_
+      period: 24h
+
+
+limits_config:
+  max_cache_freshness_per_query: ${LOKI_LIMITS_CONFIG_MAX_CACHE_FRESHNESS_PER_QUERY}
+  enforce_metric_name: ${LOKI_LIMITS_CONFIG_ENFORCE_METRIC_NAME}
+  reject_old_samples: ${LOKI_LIMITS_CONFIG_REJECT_OLD_SAMPLES}
+  reject_old_samples_max_age: ${LOKI_LIMITS_CONFIG_REJECT_OLD_SAMPLES_MAX_AGE}
+  ingestion_rate_mb: ${LOKI_LIMITS_CONFIG_INGESTION_RATE_MB}
+  ingestion_burst_size_mb: ${LOKI_LIMITS_CONFIG_INJESTION_BURST_SIZE_MB}
+  # parallelize queries in 15min intervals
+  split_queries_by_interval: ${LOKI_LIMITS_CONFIG_SPLIT_QUERIES_BY_INTERVAL}
+  # volume_enabled: true
+
+chunk_store_config:
+  max_look_back_period: ${LOKI_CHUNK_STORE_CONFIG}
+
+table_manager:
+  retention_deletes_enabled: ${LOKI_TABLE_MANAGER_RETENTION_DELETES_ENABLED}
+  retention_period: ${LOKI_TABLE_MANAGER_RETENTION_PERIOD}
+
+query_range:
+  # make queries more cache-able by aligning them with their step intervals
+  align_queries_with_step: ${LOKI_QUERY_RANGE_ALIGN_QUERIES_WITH_STEP}
+  max_retries: ${LOKI_QUERY_RANGE_MAX_RETRIES}
+  parallelise_shardable_queries: ${LOKI_QUERY_RANGE_PARALLELISE_SHARDABLE_QUERIES}
+  cache_results: ${LOKI_QUERY_RANGE_CACHE_RESULTS}
+
+frontend:
+  log_queries_longer_than: ${LOKI_FRONTEND_LOG_QUERIES_LONGER_THAN}
+  compress_responses: ${LOKI_FRONTEND_COMPRESS_RESPONSES}
+  max_outstanding_per_tenant: ${LOKI_FRONTEND_MAX_OUTSTANDING_PER_TENANT}
+
+query_scheduler:
+  max_outstanding_requests_per_tenant: ${LOKI_QUERY_SCHEDULER_MAX_OUTSTANDING_PER_TENANT}
+
+querier:
+  query_ingesters_within: ${LOKI_QUERIER_QUERY_INGESTERS_WITHIN}
+
+compactor:
+  working_directory: /tmp/compactor
+  shared_store: s3

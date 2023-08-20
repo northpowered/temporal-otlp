@@ -144,6 +144,6 @@ cython_debug/
 
 # Local:
 prometheus_data
-loki
-grafana_data/plugins
-data/
+apm_cluster/loki
+apm_cluster/grafana_data/plugins
+apm_cluster/data/

@@ -1,0 +1,44 @@
+version: "3.7"
+
+networks:
+  backend_network:
+    name: ${NETWORK_NAME}
+    external: true
+
+volumes:
+  minio-data:
+
+services:
+  minio:
+  # Minio is S3-compatible persistent storage for blocks, rules, and alerts
+    image: minio/minio:latest
+    hostname: minio
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /data/${LOKI_S3_BUCKET_NAME} && \
+        mkdir -p /data/loki-ruler && \
+        mkdir -p /data/${MIMIR_BLOCKS_STORAGE_BUCKET_NAME} && \
+        mkdir -p /data/${MIMIR_ALERTMANAGER_STORAGE_BUCKET_NAME} && \
+        mkdir -p /data/${MIMIR_RULER_STORAGE_BUCKET_NAME} && \
+        mkdir -p /data/tempo &&
+        minio server /data --console-address :9001
+    environment:
+      - MINIO_ROOT_USER=${S3_ACCESS_KEY_ID}
+      - MINIO_ROOT_PASSWORD=${S3_SECRET_ACCESS_KEY}
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+      - MINIO_UPDATE=off
+    volumes:
+      - minio-data:/data:rw
+    ports:
+      - "127.0.0.1:9001:9001"
+      - "127.0.0.1:9000:9000"
+    networks:
+      - backend_network
+    labels:
+      - com.host.plane=cp
+
+
+
+  

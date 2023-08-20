@@ -1,0 +1,93 @@
+multitenancy_enabled: ${MIMIR_MULTITENANCY_ENABLED}
+
+server:
+  log_level: ${MIMIR_SERVER_LOG_LEVEL}
+  log_format: ${MIMIR_SERVER_LOG_FORMAT}
+
+# Configure Mimir to use Minio as object storage backend.
+common:
+  storage:
+    backend: s3
+    s3:
+      endpoint: ${S3_ENDPOINT}
+      access_key_id: ${S3_ACCESS_KEY_ID}
+      secret_access_key: ${S3_SECRET_ACCESS_KEY}
+      insecure: ${S3_INSECURE}
+      
+
+blocks_storage:
+  backend: s3
+  storage_prefix: ${MIMIR_BLOCKS_STORAGE_PREFIX}
+  s3:
+    bucket_name: ${MIMIR_BLOCKS_STORAGE_BUCKET_NAME}
+  tsdb:
+    dir: ${MIMIR_BLOCKS_STORAGE_TSDB_DIR}
+    ship_interval: ${MIMIR_BLOCKS_STORAGE_SHIP_INTERVAL}
+    retention_period: ${MIMIR_BLOCKS_STORAGE_RETENTION_PERIOD}
+
+  bucket_store:
+    sync_interval: ${MIMIR_BLOCKS_STORAGE_SYNC_INTERVAL}
+    index_cache:
+      backend: memcached
+      memcached:
+        addresses: ${MEMCACHED_HOST}:${MEMCACHED_PORT}
+
+    chunks_cache:
+      backend: memcached
+      memcached:
+        addresses: ${MEMCACHED_HOST}:${MEMCACHED_PORT}
+
+    metadata_cache:
+      backend: memcached
+      memcached:
+        addresses: ${MEMCACHED_HOST}:${MEMCACHED_PORT}
+
+
+# Use memberlist, a gossip-based protocol, to enable the 3 Mimir replicas to communicate
+memberlist:
+  join_members: ["${MIMIR_MEMBERS_WRITE_HOST_1}", "${MIMIR_MEMBERS_WRITE_HOST_2}", "${MIMIR_MEMBERS_WRITE_HOST_3}"]
+
+ruler:
+  rule_path: ${MIMIR_RULER_RULE_PATH}
+  alertmanager_url: ${MIMIR_RULER_ALERTMANAGER_URL}
+  ring:
+    # Quickly detect unhealthy rulers to speed up the tutorial.
+    heartbeat_period: ${MIMIR_RULER_RING_HEARTBEAT_PERIOD}
+    heartbeat_timeout: ${MIMIR_RULER_RING_HEARTBEAT_TIMEOUT}
+
+
+ruler_storage:
+  s3:
+    bucket_name:  ${MIMIR_RULER_STORAGE_BUCKET_NAME}
+  cache:
+    backend: memcached
+    memcached:
+      addresses: ${MEMCACHED_HOST}:${MEMCACHED_PORT}
+
+
+query_scheduler:
+  service_discovery_mode: "ring"
+
+
+alertmanager:
+  data_dir: ${MIMIR_ALERTMANAGER_DATA_DIR}
+  fallback_config_file: ${MIMIR_ALERTMANAGER_FALLBACK_CONFIG_FILE}
+  external_url: ${MIMIR_ALERTMANAGER_EXTERNAL_URL}
+
+
+alertmanager_storage:
+  s3:
+    bucket_name: ${MIMIR_ALERTMANAGER_STORAGE_BUCKET_NAME}
+
+
+overrides_exporter:
+  ring:
+    enabled: ${MIMIR_OVERRIDES_EXPORTER_RING_ENABLED}
+    wait_stability_min_duration: ${MIMIR_OVERRIDES_EXPORTER_RING_WAIT_STABILITY_MIN_DURATION}
+
+
+limits:
+  native_histograms_ingestion_enabled: ${MIMIR_LIMITS_NATIVE_HISTOGRAMS_INGESTION_ENABLED}
+
+runtime_config:
+  file: ${MIMIR_RUNTIME_CONFIG}

@@ -1,0 +1,24 @@
+version: "3.7"
+
+networks:
+  backend_network:
+    name: ${NETWORK_NAME}
+    external: true
+
+
+services:
+
+  load-balancer:
+      image: nginx:${VERSION_NGINX}
+      hostname: ${LB_HOSTNAME}
+      volumes:
+        - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      ports:
+        - "${LB_EX_METRICS_PORT}:9009"
+        - "${LB_EX_LOGS_PORT}:3100"
+      networks:
+        - backend_network
+      labels:
+        - com.host.plane=cp
+        - com.host.apm-svc.type=nginx
+

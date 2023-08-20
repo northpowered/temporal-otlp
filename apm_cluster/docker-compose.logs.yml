@@ -1,8 +1,8 @@
 version: "3.8"
 
 networks:
-  otlp_network:
-    name: otlp_network
+  backend_network:
+    name: ${NETWORK_NAME}
     external: true
 
 volumes:
@@ -14,11 +14,9 @@ x-loki:
   labels:
     - com.host.plane=cp
   networks:
-    - otlp_network
+    - backend_network
   restart: always 
-  environment:
-    # expand-env example
-    - LOG_FORMAT=json
+  env_file: "cluster.config"
   ports:
     - "3100"
     - "7946"
@@ -39,7 +37,7 @@ services:
     volumes:
       - ./loki:/loki
     networks:
-      - otlp_network
+      - backend_network
 
   loki-read:
     <<: *loki
@@ -51,7 +49,7 @@ services:
 
   loki-write:
     <<: *loki
-    command: "-config.file=/etc/loki/loki.yaml -target=write -config.expand-env=true"
+    command: "-config.file=/etc/loki/loki.yaml -runtime-config.file=/etc/overrides.yaml -target=write -config.expand-env=true"
     deploy:
       mode: replicated
       replicas: 3

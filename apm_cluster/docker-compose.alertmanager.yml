@@ -1,0 +1,24 @@
+version: "3.7"
+
+networks:
+  backend_network:
+    name: ${NETWORK_NAME}
+    external: true
+
+volumes:
+  alertmanager-data:
+
+
+services:
+  alertmanager:
+    image: prom/alertmanager:${VERSION_ALERTMANAGER}
+    restart: always
+    hostname: alertmanager
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT}:9093"
+    volumes:
+      - "./config/alertmanager.yaml:/config/alertmanager.yaml"
+      - alertmanager-data:/data
+    command: --config.file=/config/alertmanager.yaml --log.level=${ALERTMANAGER_LOG_LEVEL}
+    networks:
+      - backend_network

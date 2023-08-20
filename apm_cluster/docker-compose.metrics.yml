@@ -1,8 +1,8 @@
 version: "3.7"
 
 networks:
-  otlp_network:
-    name: otlp_network
+  backend_network:
+    name: ${NETWORK_NAME}
     external: true
 
 
@@ -34,9 +34,10 @@ x-mimir:
   &mimir
   image: grafana/mimir:latest
   networks:
-    - otlp_network
+    - backend_network
   labels:
       - com.host.plane=cp
+  env_file: "cluster.config"
   volumes:
     - *mimir-v-config
     - *mimir-v-runtime
@@ -48,30 +49,30 @@ services:
     image: "memcached:1.6.19-alpine"
     hostname: memcached
     networks:
-      - otlp_network
+      - backend_network
     labels:
       - com.host.plane=cp
 
 
   mimir-backend-1:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
     hostname: "mimir-backend-1"
 
   mimir-backend-2:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
     hostname: "mimir-backend-2"
 
   mimir-backend-3:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=backend", "-tenant-federation.enabled=true"]
     hostname: "mimir-backend-3"
 
 
   mimir-write-1:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
     hostname: "mimir-write-1"
     volumes_from:
       - mimir-backend-1
@@ -80,7 +81,7 @@ services:
 
   mimir-write-2:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
     hostname: "mimir-write-2"
     volumes_from:
       - mimir-backend-2
@@ -89,7 +90,7 @@ services:
 
   mimir-write-3:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=write", "-tenant-federation.enabled=true"]
     hostname: "mimir-write-3"
     volumes_from:
       - mimir-backend-3
@@ -98,17 +99,17 @@ services:
 
   mimir-read-1:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
     hostname: "mimir-read-1"
 
   mimir-read-2:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
     hostname: "mimir-read-2"
 
   mimir-read-3:
     <<: *mimir
-    command: ["-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
+    command: ["-config.expand-env=true", "-config.file=/etc/mimir.yaml","-target=read", "-tenant-federation.enabled=true"]
     hostname: "mimir-read-3"
 
 
