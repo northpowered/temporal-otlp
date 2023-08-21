@@ -6,6 +6,7 @@ GRAFANA_MANIFEST=apm_cluster/docker-compose.grafana.yml
 ALERTMANAGER_MANIFEST=apm_cluster/docker-compose.alertmanager.yml
 METRICS_MANIFEST=apm_cluster/docker-compose.metrics.yml
 LOGS_MANIFEST=apm_cluster/docker-compose.logs.yml
+TRACING_MANIFEST=apm_cluster/docker-compose.tracing.yml
 
 CLUSTER_CONFIG=apm_cluster/cluster.config
 
@@ -152,6 +153,28 @@ recreate_logging_cluster: drop_logging_cluster create_logging_cluster ## ReCreat
 
 logs_logging_cluster: ## Show logs of Loki cluster
 	@docker-compose --file ${LOGS_MANIFEST} \
+					--env-file ${CLUSTER_CONFIG} \
+						logs \
+							--follow
+
+---------------------------------------------> : ## **Tempo cluster in read/write deployment mode**
+
+create_tracing_cluster: ## Create Tempo cluster
+	@docker-compose --file ${TRACING_MANIFEST} \
+					--env-file ${CLUSTER_CONFIG} \
+						up \
+							--detach \
+							--force-recreate
+
+drop_tracing_cluster: ## Drop Tempo cluster
+	@docker-compose --file ${TRACING_MANIFEST} \
+					--env-file ${CLUSTER_CONFIG} \
+						down
+
+recreate_tracing_cluster: drop_tracing_cluster create_tracing_cluster ## ReCreate Tempo cluster
+
+logs_tracing_cluster: ## Show logs of Tempo cluster
+	@docker-compose --file ${TRACING_MANIFEST} \
 					--env-file ${CLUSTER_CONFIG} \
 						logs \
 							--follow

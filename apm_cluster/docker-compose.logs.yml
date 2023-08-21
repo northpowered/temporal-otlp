@@ -10,16 +10,16 @@ volumes:
 
 x-loki:
   &loki
-  image: &loki-img grafana/loki:2.8.3
+  image: &loki-img grafana/loki:${VERSION_LOKI}
   labels:
-    - com.host.plane=cp
+    - ${DOCKER_LABEL_META_TENANT_KEY}=${DOCKER_LABEL_META_TENANT_VALUE}
   networks:
     - backend_network
   restart: always 
   env_file: "cluster.config"
   ports:
-    - "3100"
-    - "7946"
+    - ${LOKI_HTTP_PORT}
+    - ${LOKI_MEMBERS_PORT}
   volumes:
     - ./config/loki.yaml:/etc/loki/loki.yaml
     - ./config/overrides.yaml:/etc/overrides.yaml

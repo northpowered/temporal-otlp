@@ -36,7 +36,7 @@ x-mimir:
   networks:
     - backend_network
   labels:
-      - com.host.plane=cp
+      - ${DOCKER_LABEL_META_TENANT_KEY}=${DOCKER_LABEL_META_TENANT_VALUE}
   env_file: "cluster.config"
   volumes:
     - *mimir-v-config

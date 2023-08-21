@@ -63,7 +63,7 @@ ruler:
     enabled: true
     clients:
       local:
-         url: ${LOKI_RULER_REMOTE_WRITE}
+         url: ${METRICS_REMOTE_WRITE_PATH}
          queue_config:
            # send immediately as soon as a sample is generated
            capacity: ${LOKI_RULER_QUEUE_CONFIG_CAPACITY}

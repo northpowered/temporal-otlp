@@ -1,47 +1,41 @@
 server:
-  http_listen_port: 3200
-  log_level: info
-  log_format: json
+  http_listen_port: ${TEMPO_SERVER_HTTP_LISTEN_PORT}
+  http_listen_address: ${TEMPO_SERVER_HTTP_LISTEN_BIND}
+  grpc_listen_port: ${TEMPO_SERVER_GRPC_LISTEN_PORT}
+  grpc_listen_address: ${TEMPO_SERVER_GRPC_LISTEN_BIND}
+  log_level: ${TEMPO_SERVER_LOG_LEVEL}
+  log_format: ${TEMPO_SERVER_LOG_FORMAT}
 
-multitenancy_enabled: true
+multitenancy_enabled: ${TEMPO_MULTITENANCY_ENABLED}
 
 distributor:
-  receivers:                           # this configuration will listen on all ports and protocols that tempo is capable of.
-    jaeger:                            # the receives all come from the OpenTelemetry collector.  more configuration information can
-      protocols:                       # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
-        thrift_http:                   #
-        grpc:                          # for a production deployment you should only enable the receivers you need!
-        thrift_binary:
-        thrift_compact:
-    zipkin:
+  receivers:
     otlp:
       protocols:
         http:
         grpc:
-    opencensus:
+
+  log_received_spans:
+      enabled: ${TEMPO_DISTRIBUTOR_LOG_RECEIVED_SPANS_ENABLED}
+      include_all_attributes: ${TEMPO_DISTRIBUTOR_LOG_RECEIVED_SPANS_INCLUDE_ALL_ATTRIBUTES}
+      filter_by_status_error: ${TEMPO_DISTRIBUTOR_LOG_RECEIVED_SPANS_FILTER_BY_STATUS_ERROR}
 
 
 memberlist:
-  abort_if_cluster_join_fails: false
-  bind_port: 7946
-  join_members:
-  - tempo-ingester-1:7946
-  - tempo-ingester-2:7946
-  - tempo-ingester-3:7946
-
+  abort_if_cluster_join_fails: ${TEMPO_MEMBERLIST_ABORT_IF_CLUSTER_JOIN_FAILS}
+  bind_port: ${TEMPO_MEMBERLIST_BIND_PORT}
+  join_members: ["${TEMPO_INGESTER_1}:${TEMPO_MEMBERLIST_BIND_PORT}", "${TEMPO_INGESTER_2}:${TEMPO_MEMBERLIST_BIND_PORT}", "${TEMPO_INGESTER_3}:${TEMPO_MEMBERLIST_BIND_PORT}"]
 
 ingester:
-  max_block_duration: 5m               # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally
+  max_block_duration: ${TEMPO_INGESTER_MAX_BLOCK_DURATION}  # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally
 
 compactor:
   compaction:
-    # Store traces for 1 month
-    block_retention: 1m
-
+    block_retention: ${TEMPO_COMPACTOR_BLOCK_RETENTION}
 
 querier:
   frontend_worker:
-    frontend_address: tempo-query-frontend-1:9095
+    frontend_address: "${TEMPO_QUERIER_FRONTEND_HOST}:${TEMPO_SERVER_GRPC_LISTEN_PORT}"
 
 
 metrics_generator:
@@ -49,33 +43,35 @@ metrics_generator:
   processor:
 
     service_graphs:
-      wait: 30s
+      wait: ${TEMPO_METRICS_GENERATOR_PROCESSOR_SG_WAIT}
       # Workers is the amount of workers that will be used to process the edges
-      workers: 20
+      workers: ${TEMPO_METRICS_GENERATOR_PROCESSOR_SG_WORKERS}
       dimensions:
         - service.name
 
   registry:
     external_labels:
       source: tempo
-      cluster: otlp-test-dp
+      cluster: ${TEMPO_METRICS_GENERATOR_REGISTRY_CLUSTER_LABEL}
+
+
   storage:
     path: /tmp/tempo/generator/wal
     remote_write:
-      - url: http://load-balancer:9009/api/v1/push
+      - url: "${METRICS_REMOTE_WRITE_PATH}"
         send_exemplars: true
         headers:
-          "X-Scope-OrgID": "otlp-test-cp"
+          "X-Scope-OrgID": "${TEMPO_METRICS_GENERATOR_STORAGE_REMOTE_TENANT}"
 
 storage:
   trace:
     backend: s3                        # backend configuration to use             # where to store the the wal locally
     s3:
-      bucket: tempo                    # how to store data in s3
-      endpoint: minio:9000
-      access_key: superuser
-      secret_key: supersecret
-      insecure: true
+      bucket: ${TEMPO_STORAGE_S3_BUCKET}                    # how to store data in s3
+      endpoint: ${S3_ENDPOINT}
+      access_key: ${S3_ACCESS_KEY_ID}
+      secret_key: ${S3_SECRET_ACCESS_KEY}
+      insecure: ${S3_INSECURE}
     wal:
       path: /tmp/tempo/wal             # where to store the the wal locally
     local:

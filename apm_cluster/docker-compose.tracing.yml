@@ -1,78 +1,77 @@
 version: "3.7"
 
 networks:
-  otlp_network:
-    name: otlp_network
+  backend_network:
+    name: ${NETWORK_NAME}
     external: true
 
 x-tempo:
   &tempo
-  image: grafana/tempo:latest
+  image: grafana/tempo:${VERSION_TEMPO}
   restart: always
+  env_file: "cluster.config"
   volumes:
     - ./config/tempo.yaml:/etc/tempo.yaml
   ports:
-    - "14268"  # jaeger ingest
-    - "3200"   # tempo
-    - "9095" # tempo grpc
+    - ${TEMPO_SERVER_HTTP_LISTEN_PORT}   # tempo
+    - ${TEMPO_SERVER_GRPC_LISTEN_PORT} # tempo grpc
     - "4317"  # otlp grpc
     - "4318"  # otlp http
-    - "9411"   # zipkin
-    - "7946" # memberlist
+    - ${TEMPO_MEMBERLIST_BIND_PORT} # memberlist
   networks:
-    - otlp_network
+    - backend_network
   labels:
-    - com.host.plane=cp
+    - ${DOCKER_LABEL_META_TENANT_KEY}=${DOCKER_LABEL_META_TENANT_VALUE}
 
 services:
 
   tempo-distributor-1:
     <<: *tempo
-    command: "-target=distributor -config.file=/etc/tempo.yaml"
-    container_name: tempo-distributor-1
-    hostname: tempo-distributor-1
+    command: "-target=distributor -config.file=/etc/tempo.yaml -config.expand-env=true"
+    container_name: ${TEMPO_DISTRIBUTOR_1}
+    hostname: ${TEMPO_DISTRIBUTOR_1}
 
   tempo-ingester-1:
     <<: *tempo
-    command: "-target=ingester -config.file=/etc/tempo.yaml"
-    container_name: tempo-ingester-1
-    hostname: tempo-ingester-1
+    command: "-target=ingester -config.file=/etc/tempo.yaml -config.expand-env=true"
+    container_name: ${TEMPO_INGESTER_1}
+    hostname: ${TEMPO_INGESTER_1}
 
   tempo-ingester-2:
     <<: *tempo
-    command: "-target=ingester -config.file=/etc/tempo.yaml"
-    container_name: tempo-ingester-2
-    hostname: tempo-ingester-2
+    command: "-target=ingester -config.file=/etc/tempo.yaml -config.expand-env=true"
+    container_name: ${TEMPO_INGESTER_2}
+    hostname: ${TEMPO_INGESTER_2}
 
   tempo-ingester-3:
     <<: *tempo
-    command: "-target=ingester -config.file=/etc/tempo.yaml"
-    container_name: tempo-ingester-3
-    hostname: tempo-ingester-3
+    command: "-target=ingester -config.file=/etc/tempo.yaml -config.expand-env=true"
+    container_name: ${TEMPO_INGESTER_3}
+    hostname: ${TEMPO_INGESTER_3}
 
   tempo-query-frontend-1:
     <<: *tempo
-    command: "-target=query-frontend -config.file=/etc/tempo.yaml -log.level=debug"
-    container_name: tempo-query-frontend-1
-    hostname: tempo-query-frontend-1
+    command: "-target=query-frontend -config.file=/etc/tempo.yaml -config.expand-env=true"
+    container_name: ${TEMPO_QUERY_FRONTEND_1}
+    hostname: ${TEMPO_QUERY_FRONTEND_1}
 
   tempo-querier-1:
     <<: *tempo
-    command: "-target=querier -config.file=/etc/tempo.yaml -log.level=debug"
-    container_name: tempo-querier-1
-    hostname: tempo-querier-1
+    command: "-target=querier -config.file=/etc/tempo.yaml -config.expand-env=true"
+    container_name: ${TEMPO_QUERIER_1}
+    hostname: ${TEMPO_QUERIER_1}
 
   tempo-compactor-1:
     <<: *tempo
-    command: "-target=compactor -config.file=/etc/tempo.yaml"
-    container_name: tempo-compactor-1
-    hostname: tempo-compactor-1
+    command: "-target=compactor -config.file=/etc/tempo.yaml -config.expand-env=true"
+    container_name: ${TEMPO_COMPACTOR_1}
+    hostname: ${TEMPO_COMPACTOR_1}
 
   tempo-metrics-generator-1:
     <<: *tempo
-    command: "-target=metrics-generator -config.file=/etc/tempo.yaml"
-    container_name: tempo-metrics-generator-1
-    hostname: tempo-metrics-generator-1
+    command: "-target=metrics-generator -config.file=/etc/tempo.yaml -config.expand-env=true"
+    container_name: ${TEMPO_METRICS_GENERATOR_1}
+    hostname: ${TEMPO_METRICS_GENERATOR_1}
 
 
 
