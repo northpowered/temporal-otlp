@@ -14,18 +14,21 @@ Grafana stack deployment in production mode with Temporal microservices as small
 ## Deployment
 
 ```bash
-docker-compose -f docker-compose.base.yml up  # Network, load balancer, S3 storage, grafana
-docker-compose -f docker-compose.metrics.yml up  # Mimir in read-write mode
-docker-compose -f docker-compose.logs.yml up  # Loki
-docker-compose -f docker-compose.tracing.yml up  # Tempo
-docker-compose -f docker-compose.temporal.yml up  # Temporal
-docker-compose -f docker-compose.agents.yml up  # VictoriaMetrics agents, promtail, OTEL collectors
-./build.sh  # Services (DEV) building and deployment
-./build_prod.sh  # Services (PROD) building and deployment
+make create_all # APM cluster deployment
+make create_temporal # Temporal cluster deployment (UI on :8081)
+make create_svc_agents # VMagent, Promtail, OTEL collector for dev and prod svc
+make create_svc_dev # `Dev` test svc
+make create_svc_prod # `Prod` test svc
+
+# Do not forget to create Temporal namespaces!
+docker exec -it otel-test-temporal-admin-tools bash
+tctl --ad otel-test-temporal:7233 --ns dev n re
+tctl --ad otel-test-temporal:7233 --ns prod n re
 ```
 
 ### Usage
 ```bash
+cd apm_cluster/development
 poetry shell
 poetry install --no-root
 python3 starter.py # Dev svc
