@@ -14,3 +14,4 @@ service:
     traces:
       receivers: [otlp]
       exporters: [otlp]
+    
