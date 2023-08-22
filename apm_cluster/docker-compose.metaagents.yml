@@ -1,0 +1,48 @@
+version: "3.7"
+
+networks:
+  backend_network:
+    name: ${NETWORK_NAME}
+    external: true
+
+
+x-vmagent:
+  &vmagent
+  image: victoriametrics/vmagent:${VERSION_VMAGENT}
+  networks:
+    - backend_network
+  labels:
+    - ${DOCKER_LABEL_META_TENANT_KEY}=${DOCKER_LABEL_META_TENANT_VALUE}
+  deploy:
+    replicas: 1
+    restart_policy:
+      condition: on-failure
+  volumes:
+    - ./config:/config
+  expose:
+    - ${MM_VMAGENT_EXPOSE_PORT}
+
+services:
+  vmagent-cp:
+    <<: *vmagent
+    container_name: ${MM_VMAGEMT_HOSTNAME}
+    hostname: ${MM_VMAGEMT_HOSTNAME}
+    command:
+      - "--promscrape.config=/config/vmagent-metamonitoring.yaml"
+      - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
+      - "--remoteWrite.headers=X-Scope-OrgID:${MM_TENANT}" # Providing tenant name to headers
+
+  promtail-cp:
+    image: grafana/promtail:${VERSION_PROMTAIL}       
+    container_name: ${MM_PROMTAIL_HOSTNAME}
+    hostname: ${MM_PROMTAIL_HOSTNAME}
+    #env_file: "cluster.config"
+    volumes:
+      - ./config/promtail-metamonitoring.yaml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    #command: ["-config.expand-env=true", "-print-config-stderr"]
+    networks:
+      - backend_network
+    labels:
+      - ${DOCKER_LABEL_META_TENANT_KEY}=${DOCKER_LABEL_META_TENANT_VALUE}

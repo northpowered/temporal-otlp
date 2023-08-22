@@ -1,8 +1,8 @@
 version: "3.7"
 
 networks:
-  otlp_network:
-    name: otlp_network
+  backend_network:
+    name: apm_test_network
     external: true
 
 
@@ -10,9 +10,9 @@ x-vmagent:
   &vmagent
   image: victoriametrics/vmagent:v1.93.0
   networks:
-    - otlp_network
+    - backend_network
   labels:
-      - com.host.plane=cp
+    - com.host.plane=cp
   deploy:
     replicas: 1
     restart_policy:
@@ -28,20 +28,12 @@ x-otel-collector:
   image: otel/opentelemetry-collector:0.61.0
   command: ["--config=/etc/otel-collector.yaml"]
   networks:
-    - otlp_network
+    - backend_network
   labels:
-      - com.host.plane=cp
+    - com.host.plane=cp
 
 
 services:
-  vmagent-cp:
-    <<: *vmagent
-    container_name: vmagent-cp
-    hostname: vmagent-cp
-    command:
-      - "--promscrape.config=/config/prometheus-cp.yaml"
-      - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
-      - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-cp" # Providing tenant name to headers
 
   vmagent-dp-dev:
     <<: *vmagent
@@ -61,21 +53,6 @@ services:
       - "--remoteWrite.url=http://load-balancer:9009/api/v1/push"
       - "--remoteWrite.headers=X-Scope-OrgID:otlp-test-dp-prod" # Providing tenant name to headers
 
-
-  promtail-cp:
-    image: grafana/promtail:latest        
-    container_name: promtail-cp
-    hostname: promtail-cp
-    volumes:
-      - ./config/promtail-cp.yaml:/etc/promtail/config.yml
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/containers:/var/lib/docker/containers
-      - ./config/test.log:/test.log
-    networks:
-      - otlp_network
-    labels:
-      - com.host.plane=cp
-
   promtail-dp-dev:
     image: grafana/promtail:latest        
     container_name: promtail-dp-dev
@@ -85,7 +62,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/var/lib/docker/containers
     networks:
-      - otlp_network
+      - backend_network
     labels:
       - com.host.plane=cp
 
@@ -98,7 +75,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/var/lib/docker/containers
     networks:
-      - otlp_network
+      - backend_network
     labels:
       - com.host.plane=cp
 

@@ -1,12 +1,18 @@
 # export DOCKER_BUILDKIT=1 
 # export COMPOSE_DOCKER_CLI_BUILD=1
 
+networks:
+  backend_network:
+    name: apm_test_network
+    external: true
+
+
 x-service-template:
   &service
   env_file:
     - .env_prod
   networks:
-    - otlp_network
+    - backend_network
   labels:
       - com.host.plane=dp
       - x.mode=prod
@@ -69,9 +75,3 @@ services:
         - SRV_LETTER=F
     hostname: otel-test-service-f-prod
     container_name: otel-test-service-f-prod
-# Networking
-
-networks:
-  otlp_network:
-    name: otlp_network
-    external: true
